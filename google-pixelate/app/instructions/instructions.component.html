@@ -1,0 +1,83 @@
+<mat-toolbar class="vertical hide-mobile">
+  <div class="scroll-container-vertical">
+    <table>
+      <thead>
+        <tr>
+          <th>Color</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let row of colors"
+          (click)="toggleCrossedColor(row.color)"
+          class="toggle-strikethrough"
+          [class.strikethrough]="state.crossedOutColors.has(row.color)"
+        >
+          <td
+            [style]="{ backgroundColor: row.color }"
+            class="text-center"
+            [class]="textClasses.get(row.color)"
+          >
+            {{ state.crossedOutColors.has(row.color) ? "" : row.index }}
+          </td>
+          <td class="text-right">{{ row.count }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="details text-center">
+    <div>{{ totalCount }} notes</div>
+    <div>
+      {{ totalWidth | number: "1.0-0" }} x
+      {{ totalHeight | number: "1.0-0" }} cm
+    </div>
+    <dd>{{ lowerTime }} - {{ upperTime }} min</dd>
+  </div>
+</mat-toolbar>
+
+<div class="scroll-container">
+  <table class="grid">
+    <tr>
+      <td></td>
+      <td
+        *ngFor="let c of pixels[0]; let index = index"
+        class="toggle"
+        (click)="toggleCrossedColumn(index)"
+      >
+        {{ index + 1 }}
+      </td>
+      <td></td>
+    </tr>
+    <tr *ngFor="let row of pixels; let rowI = index">
+      <td class="toggle" (click)="toggleCrossedRow(rowI)">
+        {{ rowI + 1 }}
+      </td>
+      <td
+        *ngFor="let color of row; let colI = index"
+        [style]="{ backgroundColor: color }"
+        [class.completed]="
+          state.crossedOutRows.has(rowI) || state.crossedOutColumns.has(colI)
+        "
+        [class]="textClasses.get(color)"
+      >
+        {{ state.crossedOutColors.has(color) ? "" : indices.get(color) }}
+      </td>
+      <td class="toggle" (click)="toggleCrossedRow(rowI)">
+        {{ rowI + 1 }}
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td
+        *ngFor="let c of pixels[0]; let index = index"
+        class="toggle"
+        (click)="toggleCrossedColumn(index)"
+      >
+        {{ index + 1 }}
+      </td>
+      <td></td>
+    </tr>
+  </table>
+</div>

@@ -1,0 +1,182 @@
+/*
+ Copyright 2022 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+@use "@angular/material" as mat;
+
+@include mat.core();
+
+$primary: mat.define-palette(mat.$gray-palette, 600);
+$accent: mat.define-palette(mat.$cyan-palette, 600);
+
+$light-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $primary,
+      accent: $accent,
+    ),
+  )
+);
+
+@include mat.all-component-themes($light-theme);
+
+$dark-theme: mat.define-dark-theme(
+  (
+    color: (
+      primary: $primary,
+      accent: $accent,
+    ),
+  )
+);
+
+html {
+  --background-color: white;
+  --divider-color: #e0e0e0;
+  --color: rgba(0, 0, 0, 0.87);
+  --accent-border: rgba(0, 0, 0, 0.1);
+
+  .light-text {
+    color: rgba(255, 255, 255, 0.66);
+  }
+
+  .dark-text {
+    color: rgba(0, 0, 0, 0.66);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  @include mat.all-component-colors($dark-theme);
+
+  html {
+    --background-color: #333;
+    --divider-color: #555;
+    --color: #dedede;
+    --accent-border: rgba(255, 255, 255, 0.3);
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  overscroll-behavior: contain;
+  background-color: var(--background-color);
+  color: var(--color);
+}
+
+*[hidden] {
+  display: none !important;
+}
+
+mat-toolbar {
+  &,
+  &.mat-toolbar {
+    font-size: 1rem;
+  }
+
+  @media print {
+    display: none !important;
+  }
+
+  .spacer {
+    flex: 1;
+    display: flex;
+  }
+
+  &.vertical {
+    flex-direction: column;
+    width: auto;
+    height: 100%;
+    padding: 16px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mat-button-toggle-group {
+      // Do not shrink toggle group when other elements in
+      // the menu are occupying space.
+      overflow: initial;
+    }
+
+    .mat-button-toggle,
+    .mat-button-toggle-group-appearance-standard,
+    .mat-button-toggle-group-appearance-standard
+      .mat-button-toggle
+      + .mat-button-toggle {
+      border: none;
+
+      &.mat-button-toggle-checked {
+        border-left: 4px solid;
+      }
+    }
+  }
+
+  [mat-tab-nav-bar] {
+    user-select: none;
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+dt {
+  display: inline;
+}
+dd {
+  display: inline;
+  margin: 0;
+
+  &::after {
+    content: "\a";
+    white-space: pre;
+  }
+}
+
+.mat-menu-panel {
+  hr {
+    margin: 0;
+    border-color: #e0e0e0;
+    border-width: 1px 0 0;
+  }
+}
+
+html {
+  --mobile: 0;
+}
+
+@media (max-width: 480px), (max-height: 480px) {
+  html {
+    --mobile: 1;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+img,
+canvas {
+  image-rendering: pixelated;
+}
+
+.text-center {
+  text-align: center;
+}

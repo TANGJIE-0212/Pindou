@@ -1,0 +1,3808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>🫧 拼豆图纸生成器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --pink: #FF6B9D;
+    --pink-light: #FFB3D0;
+    --yellow: #FFD93D;
+    --yellow-light: #FFF3B0;
+    --mint: #6BCB77;
+    --mint-light: #B5EAD7;
+    --blue: #4D96FF;
+    --blue-light: #A8D8FF;
+    --purple: #C77DFF;
+    --purple-light: #E0C3FC;
+    --bg: #FFF5F7;
+    --card: #FFFFFF;
+    --text: #5A3E5C;
+    --text-light: #9B7E9E;
+    --shadow: 0 4px 20px rgba(255, 107, 157, 0.15);
+    --radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      radial-gradient(circle 6px at 10% 15%, var(--pink-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 85% 10%, var(--yellow) 100%, transparent 100%),
+      radial-gradient(circle 4px at 90% 45%, var(--mint-light) 100%, transparent 100%),
+      radial-gradient(circle 6px at 5% 70%, var(--blue-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 75% 85%, var(--purple-light) 100%, transparent 100%),
+      radial-gradient(circle 4px at 30% 90%, var(--yellow-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 50% 5%, var(--mint-light) 100%, transparent 100%),
+      radial-gradient(circle 3px at 15% 40%, var(--pink-light) 100%, transparent 100%),
+      radial-gradient(circle 4px at 95% 70%, var(--yellow) 100%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .container {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header { text-align: center; padding: 24px 0 16px; }
+  .header h1 {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: 1px;
+  }
+  .header p { color: var(--text-light); font-size: 14px; margin-top: 4px; font-weight: 600; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid rgba(255, 107, 157, 0.1);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; color: var(--pink);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ===== Upload ===== */
+  .upload-zone {
+    border: 3px dashed var(--pink-light); border-radius: 16px;
+    padding: 32px 16px; text-align: center; cursor: pointer;
+    transition: all 0.3s; background: linear-gradient(135deg, #FFF5F7, #FFF0F5);
+    overflow: hidden;
+  }
+  .upload-zone:active { transform: scale(0.97); }
+  .upload-zone.has-image { padding: 8px; }
+  .upload-icon { font-size: 48px; display: block; margin-bottom: 8px; }
+  .upload-text { font-size: 15px; font-weight: 700; color: var(--pink); }
+  .upload-hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+  .upload-zone img { max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: contain; }
+  #fileInput { display: none; }
+
+  /* ===== Settings ===== */
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-label {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .setting-value {
+    font-size: 13px; color: var(--text-light); font-weight: 600;
+    min-width: 36px; text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--pink-light), var(--purple-light));
+    outline: none; margin: 0 8px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: white; border: 3px solid var(--pink);
+    box-shadow: 0 2px 8px rgba(255,107,157,0.3); cursor: pointer;
+  }
+
+  select {
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--text); background: var(--bg);
+    border: 2px solid var(--pink-light); border-radius: 12px;
+    padding: 8px 28px 8px 12px; outline: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23FF6B9D'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+
+  .size-inputs { display: flex; align-items: center; gap: 6px; }
+  .size-input {
+    width: 52px; padding: 7px 4px; text-align: center;
+    border: 2px solid var(--pink-light); border-radius: 10px;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+    color: var(--text); background: var(--bg); outline: none;
+  }
+  .size-input:focus { border-color: var(--pink); }
+  .size-x { font-weight: 700; color: var(--text-light); font-size: 14px; }
+
+  .tab-bar {
+    display: flex; background: var(--bg); border-radius: 14px;
+    padding: 4px; margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 6px; border: none; background: transparent;
+    border-radius: 11px; font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--text-light);
+    cursor: pointer; transition: all 0.25s; text-align: center;
+  }
+  .tab-btn.active {
+    background: white; color: var(--pink);
+    box-shadow: 0 2px 8px rgba(255,107,157,0.15);
+  }
+
+  .diff-tiers { display: flex; gap: 8px; margin-bottom: 14px; }
+  .diff-btn {
+    flex: 1; padding: 10px 6px; border: 2px solid transparent;
+    border-radius: 14px; background: var(--bg); cursor: pointer;
+    text-align: center; transition: all 0.2s; font-family: 'Nunito', sans-serif;
+  }
+  .diff-btn:active { transform: scale(0.95); }
+  .diff-btn.active { border-color: var(--pink); background: #FFF0F5; }
+  .diff-dot { font-size: 22px; display: block; margin-bottom: 2px; }
+  .diff-name { font-size: 13px; font-weight: 800; color: var(--text); }
+  .diff-desc {
+    font-size: 10px; font-weight: 600; color: var(--text-light);
+    line-height: 1.3; margin-top: 3px;
+  }
+  .diff-time {
+    display: inline-block; margin-top: 4px;
+    font-size: 10px; font-weight: 700; border-radius: 8px;
+    padding: 1px 8px;
+  }
+  .diff-btn[data-diff="easy"] .diff-time { background: #E8F5E9; color: #2E7D32; }
+  .diff-btn[data-diff="medium"] .diff-time { background: #FFF8E1; color: #F57F17; }
+  .diff-btn[data-diff="hard"] .diff-time { background: #FFEBEE; color: #C62828; }
+
+  /* ===== Buttons ===== */
+  .btn {
+    width: 100%; padding: 14px; border: none; border-radius: 16px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white; box-shadow: 0 4px 16px rgba(255,107,157,0.4);
+  }
+  .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+  .btn-secondary {
+    background: linear-gradient(135deg, var(--mint), var(--blue));
+    color: white; box-shadow: 0 4px 16px rgba(107,203,119,0.3);
+  }
+  .btn-outline { background: white; color: var(--pink); border: 2px solid var(--pink-light); }
+  .btn-small {
+    width: auto; padding: 10px 16px; font-size: 13px; border-radius: 12px;
+  }
+
+  /* ===== Progress ===== */
+  .progress-wrap { display: none; margin-top: 12px; }
+  .progress-wrap.show { display: block; }
+  .progress-bar { height: 8px; background: var(--pink-light); border-radius: 4px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--pink), var(--purple));
+    border-radius: 4px; transition: width 0.3s; width: 0%;
+  }
+  .progress-text {
+    font-size: 12px; color: var(--text-light); text-align: center;
+    margin-top: 6px; font-weight: 600;
+  }
+
+  /* ===== Fidelity Slider ===== */
+  .fidelity-section { margin: 14px 0; }
+  .fidelity-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .fidelity-label span:first-child { font-size: 14px; font-weight: 700; color: var(--text); }
+  .fidelity-info {
+    font-size: 11px; font-weight: 600; color: var(--text-light);
+    background: var(--bg); padding: 2px 10px; border-radius: 8px;
+  }
+  .fidelity-slider {
+    width: 100%; height: 10px;
+    background: linear-gradient(90deg, var(--mint-light), var(--yellow), var(--pink));
+  }
+  .fidelity-slider::-webkit-slider-thumb {
+    width: 32px; height: 32px;
+  }
+  .fidelity-hints {
+    display: flex; justify-content: space-between;
+    font-size: 10px; font-weight: 700; color: var(--text-light);
+    margin-top: 4px;
+  }
+
+  /* ===== Result Section ===== */
+  #resultSection { display: none; }
+  #resultSection.show { display: block; animation: slideUp 0.4s ease; }
+
+  /* Pattern table */
+  .pattern-scroll {
+    overflow: hidden;
+    border: 2px solid var(--pink-light); border-radius: 14px;
+    background: white; position: relative;
+    min-height: 260px;
+    max-height: 72vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px;
+  }
+  .pattern-preview {
+    display: block;
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .pattern-stage { display: none; }
+  .pattern-table {
+    border-collapse: collapse;
+    font-size: 7px; font-weight: 700;
+    line-height: 1;
+    font-family: 'Courier New', monospace;
+  }
+  .pattern-table td, .pattern-table th {
+    text-align: center; vertical-align: middle;
+    padding: 0; border: 0.5px solid rgba(0,0,0,0.07);
+  }
+  .pattern-table th {
+    background: #F8F0F2; color: var(--text-light);
+    font-size: 6px; font-weight: 700; position: sticky; z-index: 2;
+    padding: 1px 0; min-width: 18px;
+  }
+  .pattern-table thead th { top: 0; }
+  .pattern-table .row-hdr { position: sticky; left: 0; z-index: 3; background: #F8F0F2; min-width: 16px; }
+  .pattern-table .corner { z-index: 4; background: #F0E8EC; }
+  .pattern-table .bead-cell {
+    min-width: 18px; height: 18px;
+    font-size: 5.5px; letter-spacing: -0.3px;
+    color: rgba(0,0,0,0.7); overflow: hidden;
+    white-space: nowrap;
+  }
+  /* 每5行5列粗线 */
+  .pattern-table .grid5-r { border-top: 0.5px solid rgba(255,107,157,0.12); }
+  .pattern-table .grid5-c { border-left: 0.5px solid rgba(255,107,157,0.12); }
+
+  /* Fullscreen overlay */
+  .fullscreen-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.92);
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .fullscreen-overlay.show { display: flex; }
+  .fullscreen-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); border: none;
+    color: white; font-size: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fullscreen-inner {
+    overflow: auto; -webkit-overflow-scrolling: touch;
+    max-width: 100vw; max-height: 90vh;
+  }
+  .fullscreen-rotate {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px;
+  }
+  .fullscreen-rotate button {
+    padding: 10px 20px; border-radius: 12px;
+    background: rgba(255,255,255,0.15); border: none;
+    color: white; font-size: 14px; font-weight: 700;
+    font-family: 'Nunito', sans-serif; cursor: pointer;
+  }
+  .fullscreen-rotate button:active { background: rgba(255,255,255,0.3); }
+
+  /* ===== Bottom action buttons ===== */
+  .action-bar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .action-bar .btn { flex: 1; min-width: 100px; padding: 11px 8px; font-size: 13px; }
+
+  /* ===== Drawer panel (tools / palette / stats) ===== */
+  .drawer-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.4);
+  }
+  .drawer-overlay.show { display: block; }
+  .drawer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 501; background: white;
+    border-radius: 20px 20px 0 0;
+    max-height: 75vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.3s ease;
+    padding: 20px 16px 32px; -webkit-overflow-scrolling: touch;
+  }
+  .drawer.show { transform: translateY(0); }
+  .drawer-handle {
+    width: 40px; height: 5px; background: #E0D0D6; border-radius: 3px;
+    margin: 0 auto 16px;
+  }
+
+  /* Tool buttons inside drawer */
+  .drawer-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .dtool-btn {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--bg); border: 2px solid transparent;
+    font-size: 24px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .dtool-btn.active { border-color: var(--pink); background: #FFF0F5; }
+  .dtool-btn:active { transform: scale(0.9); }
+  .dtool-label { font-size: 9px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
+
+  /* Palette inside drawer */
+  .palette-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr);
+    gap: 5px; max-height: 200px; overflow-y: auto;
+    padding: 6px; background: var(--bg); border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .palette-swatch {
+    aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .palette-swatch:active { transform: scale(0.85); }
+  .palette-swatch.selected {
+    border-color: var(--text);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--pink);
+    transform: scale(1.15); z-index: 2;
+  }
+
+  /* Stats inside drawer */
+  .color-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .color-chip {
+    display: flex; align-items: center; gap: 5px; background: var(--bg);
+    border-radius: 20px; padding: 4px 10px 4px 4px; font-size: 12px; font-weight: 700;
+  }
+  .color-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.1); flex-shrink: 0;
+  }
+
+  .palette-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--yellow-light), var(--yellow));
+    color: var(--text); font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px; margin-left: 6px;
+  }
+
+  .hidden { display: none !important; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🫧 拼豆图纸生成器</h1>
+    <p>上传照片或空白画布，设计你的拼豆作品 ✨</p>
+  </div>
+
+  <!-- ==================== 首页 =================== -->
+  <div id="homeSection">
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-mode="import">📷 导入图片</button>
+        <button class="tab-btn" data-mode="blank">🎨 空白画布</button>
+      </div>
+
+      <div id="importMode">
+        <div class="upload-zone" id="uploadZone">
+          <span class="upload-icon">🖼️</span>
+          <div class="upload-text">点击上传照片</div>
+          <div class="upload-hint">支持从相册选取或拍照</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+
+      </div>
+
+      <div id="blankMode" class="hidden">
+        <div style="text-align:center; padding: 20px 0;">
+          <span style="font-size:48px">🧩</span>
+          <div style="font-size:15px;font-weight:700;color:var(--pink);margin-top:8px">创建空白拼豆板</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:4px">选好尺寸，直接开始创作！</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ 画布设置</div>
+
+      <div class="setting-row"><span class="setting-label">🎯 难度档位</span></div>
+      <div class="diff-tiers" id="diffTiers">
+        <div class="diff-btn active" data-diff="easy">
+          <span class="diff-dot">🟢</span>
+          <div class="diff-name">简单</div>
+          <div class="diff-desc">大色块<br>≤16色</div>
+          <span class="diff-time">~1小时</span>
+        </div>
+        <div class="diff-btn" data-diff="medium">
+          <span class="diff-dot">🟡</span>
+          <div class="diff-name">中等</div>
+          <div class="diff-desc">少量细节<br>≤32色</div>
+          <span class="diff-time">2-4小时</span>
+        </div>
+        <div class="diff-btn" data-diff="hard">
+          <span class="diff-dot">🔴</span>
+          <div class="diff-name">困难</div>
+          <div class="diff-desc">大量细节<br>渐变色</div>
+          <span class="diff-time">半天+</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">🎨 拼豆色卡</span>
+        <select id="paletteBrand">
+          <option value="artkal5">Artkal S 5mm (199色)</option>
+          <option value="hama">Hama 5mm (92色)</option>
+          <option value="artkalMini">Artkal C 2.6mm (174色)</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">🔲 尺寸</span>
+        <div class="size-inputs">
+          <input type="number" class="size-input" id="gridW" value="29" min="1" max="116">
+          <span class="size-x">×</span>
+          <input type="number" class="size-input" id="gridH" value="29" min="1" max="116">
+        </div>
+      </div>
+
+      <div id="importSettings">
+        <div class="setting-row">
+          <span class="setting-label">🧊 颜色数</span>
+          <div style="display:flex;align-items:center">
+            <input type="range" id="colorCount" min="2" max="199" value="16">
+            <span class="setting-value" id="colorCountValue">16</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px">
+      <button class="btn btn-primary" id="generateBtn" disabled>✨ 生成拼豆图纸</button>
+      <button class="btn btn-secondary hidden" id="createBlankBtn">🎨 创建空白画布</button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">正在生成中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 结果页 =================== -->
+  <div id="resultSection">
+    <!-- 精细度滑轨 -->
+    <div class="card" id="fidelityCard">
+      <div class="fidelity-section">
+        <div class="fidelity-label">
+          <span>✨ 精细度</span>
+          <span class="fidelity-info" id="fidelityInfo">29×29 · 16色</span>
+        </div>
+        <input type="range" class="fidelity-slider" id="fidelitySlider" min="0" max="100" value="15">
+        <div class="fidelity-hints">
+          <span>简单快速</span>
+          <span>精细复杂</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图纸 (点击放大) -->
+    <div class="card" style="padding:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="card-title" style="margin-bottom:0">📋 拼豆图纸</div>
+        <span class="palette-tag" id="beadCount"></span>
+      </div>
+      <div class="pattern-scroll" id="patternScroll">
+        <canvas class="pattern-preview" id="patternCanvas"></canvas>
+        <div class="pattern-stage" id="patternStage">
+          <table class="pattern-table" id="patternTable"></table>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <span style="font-size:11px;color:var(--text-light);font-weight:600">👆 滑动查看 · 点击全屏旋转</span>
+      </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="card" style="padding:14px">
+      <div class="action-bar">
+        <button class="btn btn-secondary btn-small" id="saveBtn">💾 保存图片</button>
+        <button class="btn btn-outline btn-small" id="toolsBtn">🛠️ 编辑工具</button>
+        <button class="btn btn-outline btn-small" id="statsBtn">📊 配色清单</button>
+      </div>
+      <div class="action-bar" style="margin-top:8px">
+        <button class="btn btn-outline btn-small" id="backBtn">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 全屏旋转查看 ===== -->
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+  <button class="fullscreen-close" id="fullscreenClose">✕</button>
+  <div class="fullscreen-inner" id="fullscreenInner"></div>
+  <div class="fullscreen-rotate">
+    <button id="rotateBtn">🔄 旋转 90°</button>
+    <button id="fullscreenSaveBtn">💾 保存</button>
+  </div>
+</div>
+
+<!-- ===== 工具抽屉 ===== -->
+<div class="drawer-overlay" id="toolsOverlay"></div>
+<div class="drawer" id="toolsDrawer">
+  <div class="drawer-handle"></div>
+  <div class="card-title">🛠️ 编辑工具</div>
+  <div class="drawer-tools" id="drawerTools">
+    <button class="dtool-btn active" data-tool="pencil">
+      <span>✏️</span><span class="dtool-label">画笔</span>
+    </button>
+    <button class="dtool-btn" data-tool="eraser">
+      <span>🧹</span><span class="dtool-label">橡皮</span>
+    </button>
+    <button class="dtool-btn" data-tool="move">
+      <span>🤚</span><span class="dtool-label">移动</span>
+    </button>
+    <button class="dtool-btn" data-tool="undo">
+      <span>↩️</span><span class="dtool-label">撤销</span>
+    </button>
+  </div>
+  <div style="margin-top:16px">
+    <div class="card-title">🎨 选色</div>
+    <div class="palette-grid" id="paletteGrid"></div>
+  </div>
+</div>
+
+<!-- ===== 配色清单抽屉 ===== -->
+<div class="drawer-overlay" id="statsOverlay"></div>
+<div class="drawer" id="statsDrawer">
+  <div class="drawer-handle"></div>
+  <div class="card-title">📊 配色清单 <span class="palette-tag" id="beadCount2"></span></div>
+  <div class="color-stats" id="colorStats"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ================================================================
+  //  三套拼豆色板 — Artkal S 5mm / Hama Midi 5mm / Artkal C 2.6mm
+  //  数据来源: github.com/maxcleme/beadcolors (社区维护真实色卡)
+  // ================================================================
+
+  const PALETTES = {
+    artkal5: {
+      label: 'Artkal S 5mm (199色)',
+      colors: [
+        {n:'S01 White',h:'#EAEEF3'},{n:'S02 Burning Sand',h:'#EE927C'},{n:'S03 Tangerine',h:'#FFA630'},
+        {n:'S04 Orange',h:'#EB6027'},{n:'S05 Tall Poppy',h:'#CB3531'},{n:'S06 Raspberry Pink',h:'#EF67B2'},
+        {n:'S07 Gray',h:'#959698'},{n:'S08 Emerald',h:'#1FC467'},{n:'S09 Dark Green',h:'#00685E'},
+        {n:'S10 Baby Blue',h:'#2EABD8'},{n:'S11 Dark Blue',h:'#004FA4'},{n:'S12 Pastel Lavender',h:'#9165B2'},
+        {n:'S13 Black',h:'#292A2B'},{n:'S14 Sandstorm',h:'#E1C835'},{n:'S15 Redwood',h:'#9A4541'},
+        {n:'S16 Brown',h:'#65463D'},{n:'S17 Light Brown',h:'#895D49'},{n:'S18 Sand',h:'#DCA384'},
+        {n:'S19 Bubble Gun',h:'#F2BFB8'},{n:'S20 Green',h:'#009053'},{n:'S21 Pastel Green',h:'#8BB23A'},
+        {n:'S22 Purple',h:'#48337E'},{n:'S23 Royal Purple',h:'#644FA4'},{n:'S24 True Blue',h:'#0078BF'},
+        {n:'S25 Hot Pink',h:'#DC519A'},{n:'S26 Magenta',h:'#DA4383'},{n:'S27 Yellow',h:'#EAC125'},
+        {n:'S28 Lily Pink',h:'#DDA1CC'},{n:'S29 Pastel Yellow',h:'#E1D367'},{n:'S30 Shadow Green',h:'#9EC9CD'},
+        {n:'S31 Sea Mist',h:'#B2D7CE'},{n:'S32 Beeswax',h:'#EED39E'},{n:'S33 Maverick',h:'#C0B7D7'},
+        {n:'S34 Red',h:'#B61927'},{n:'S35 Mona Lisa',h:'#E1CCD2'},{n:'S36 Old Pink',h:'#CE6D83'},
+        {n:'S37 Blue-Green',h:'#60BFCB'},{n:'S38 Burgundy',h:'#A3134A'},{n:'S39 Yellow Orange',h:'#E68739'},
+        {n:'S40 Carnation Pink',h:'#E182B0'},{n:'S41 Copper',h:'#9D5B2E'},{n:'S42 Silver',h:'#676B73'},
+        {n:'S43 Dark Gray',h:'#70757B'},{n:'S44 Sky Blue',h:'#A7CDDE'},{n:'S45 Medium Turquoise',h:'#00A5A1'},
+        {n:'S46 Bright Green',h:'#8EC324'},{n:'S47 Marigold',h:'#B27938'},{n:'S48 Corn',h:'#ECC03D'},
+        {n:'S49 Mulberry Wood',h:'#921E5D'},{n:'S50 Mandys Pink',h:'#E2A488'},{n:'S51 Spring Sun',h:'#DFDABD'},
+        {n:'S52 Picasso',h:'#EADE7F'},{n:'S53 Turquoise',h:'#55A4D9'},{n:'S54 Light Blue',h:'#0084CE'},
+        {n:'S55 Pistachio',h:'#97CF87'},{n:'S56 Bright Carrot',h:'#F96F40'},{n:'S57 Buccaneer',h:'#B35540'},
+        {n:'S58 Paprika',h:'#B11836'},{n:'S59 Butterfly Bush',h:'#4F3989'},{n:'S60 Lavender',h:'#8A7EC2'},
+        {n:'S61 Key Lomen Pie',h:'#CDC03F'},{n:'S62 Green Tea',h:'#00765F'},{n:'S63 Metallic Gold',h:'#696046'},
+        {n:'S64 Black Rock',h:'#36384D'},{n:'S65 Canary',h:'#E2E65D'},{n:'S66 Blaze Orange',h:'#E5533C'},
+        {n:'S67 Vanilla',h:'#E9C1A6'},{n:'S68 Tan',h:'#CC9B74'},{n:'S69 Mine Shaft',h:'#383E44'},
+        {n:'S70 Drark Algae',h:'#ADAD29'},{n:'S71 Jade Green',h:'#007D2B'},{n:'S72 Light Sea Blue',h:'#68C4D2'},
+        {n:'S73 Steel Blue',h:'#5AB0BF'},{n:'S74 Azure',h:'#009EC2'},{n:'S75 Dark Steel Blue',h:'#0084B2'},
+        {n:'S76 Sea Blue',h:'#0093A9'},{n:'S77 Ghost While',h:'#D4D8D3'},{n:'S78 Ash Grey',h:'#C2C4C2'},
+        {n:'S79 Light Gray',h:'#A7ACAD'},{n:'S80 Dark Olive',h:'#8F8E3C'},{n:'S81 Deer',h:'#BF9168'},
+        {n:'S82 Clay',h:'#AA744E'},{n:'S83 Sienna',h:'#BB6833'},{n:'S84 Deep Chestnut',h:'#BE5D65'},
+        {n:'S85 Red Wine',h:'#99323A'},{n:'S86 Goldenrod',h:'#E8AE00'},{n:'S87 Coral Red',h:'#EC625E'},
+        {n:'S88 Dark Pink',h:'#D62779'},{n:'S89 Charcoal Gray',h:'#565A5E'},{n:'S90 Pastel Orange',h:'#D9B35E'},
+        {n:'S91 Brunswick Green',h:'#153838'},{n:'S92 Dandelion',h:'#CEA433'},{n:'S93 Pale Skin',h:'#DCB794'},
+        {n:'S94 Warm Blush',h:'#DD9285'},{n:'S95 Salmon',h:'#E07B69'},{n:'S96 Apricot',h:'#EF7F61'},
+        {n:'S97 Papaya',h:'#DC772B'},{n:'S98 Himalaya Blue',h:'#6AAEDB'},{n:'S99 Waterfall',h:'#61BBD3'},
+        {n:'S100 Lagoon',h:'#279BBE'},{n:'S101 Electric Blue',h:'#00A7E3'},{n:'S102 Pool Blue',h:'#0077CA'},
+        {n:'S103 Caribbian Blue',h:'#005AA9'},{n:'S104 Deep Water',h:'#007F9E'},{n:'S105 Petrol Blue',h:'#007D91'},
+        {n:'S106 Wegdewood Blue',h:'#00649A'},{n:'S107 Pond Blue',h:'#006C9F'},{n:'S108 Seashell Beige',h:'#CFC179'},
+        {n:'S109 Beige',h:'#C4AE64'},{n:'S110 Beach Beige',h:'#AB9745'},{n:'S111 Caffe Latté',h:'#978138'},
+        {n:'S112 Oaktree Brown',h:'#907C41'},{n:'S113 Khaki',h:'#B6AE84'},{n:'S114 Light Greengray',h:'#A59F65'},
+        {n:'S115 Mossy Green',h:'#938D54'},{n:'S116 Earth Green',h:'#8D8B51'},{n:'S117 Sage Green',h:'#7F7E49'},
+        {n:'S118 Pinetree Green',h:'#5B6E35'},{n:'S119 Frosty Blue',h:'#8AD5C9'},{n:'S120 Polar Mint',h:'#7CD2A5'},
+        {n:'S121 Celadon Green',h:'#72AC9A'},{n:'S122 Eucalyptus',h:'#00B26F'},{n:'S123 Clover Field',h:'#3EB724'},
+        {n:'S124 Pooltable Felt',h:'#0D7535'},{n:'S125 Snake Green',h:'#007D6E'},{n:'S126 Dark Eucalyptus',h:'#006E69'},
+        {n:'S127 Marsmallow Rose',h:'#DFC3E1'},{n:'S128 Light Grape',h:'#D38ED4'},{n:'S129 Rosebud Pink',h:'#D5A6BA'},
+        {n:'S130 Fuschia',h:'#D6668E'},{n:'S131 Candy Violet',h:'#B8AAD9'},{n:'S132 Flamingo',h:'#DF486D'},
+        {n:'S133 Pink Plum',h:'#BC3CA6'},{n:'S134 Amethyst',h:'#803897'},{n:'S135 Moonlight Blue',h:'#A7BAE1'},
+        {n:'S136 Summer Rain',h:'#AFB8DF'},{n:'S137 Azur Blue',h:'#6B9AD4'},{n:'S138 Cornflower Blue',h:'#5A89CE'},
+        {n:'S139 Forget Me Not',h:'#658AD0'},{n:'S140 Indigo',h:'#566CBD'},{n:'S141 Horizon Blue',h:'#4D74C6'},
+        {n:'S142 Cobolt',h:'#416DBE'},{n:'S143 Royal Blue',h:'#30429E'},{n:'S144 Marine',h:'#024288'},
+        {n:'S145 Pale Yellow Moss',h:'#D6CA6A'},{n:'S146 Bloodrose Red',h:'#9D1A38'},{n:'S147 Spearmint',h:'#80B7A1'},
+        {n:'S148 Mocha',h:'#7A594F'},{n:'S149 Creme',h:'#EFDBA1'},{n:'S150 Iris Violet',h:'#8884D0'},
+        {n:'S151 Forrest Green',h:'#345621'},{n:'S152 Lilac',h:'#AEADDC'},{n:'S153 Pale Lilac',h:'#BCC3E1'},
+        {n:'S154 Sahara Sand',h:'#E3C09A'},{n:'S155 Sunkissed Teint',h:'#C58B60'},{n:'S156 Steel Grey',h:'#5A5F65'},
+        {n:'S157 Iron Grey',h:'#4C5156'},{n:'S158 Pepper',h:'#3A3E42'},{n:'S159 Oslo Gray',h:'#82878B'},
+        {n:'SE1 Moon',h:'#F1F4FA'},{n:'SE2 Raincloud',h:'#A2B2D3'},{n:'SE3 Winter',h:'#83A6DC'},
+        {n:'SE4 Tide',h:'#70D8ED'},{n:'SE5 Aquamarine',h:'#69E3D5'},{n:'SE6 Neptune',h:'#2A63C8'},
+        {n:'SE7 Rose Quartz',h:'#D5AEC9'},{n:'SE8 Mauve',h:'#AF739A'},{n:'SE9 Dark Mauve',h:'#704B6D'},
+        {n:'SE10 Wild Berry',h:'#D977CD'},{n:'SE11 Sugar Plum',h:'#B643AC'},{n:'SE12 Desert',h:'#DEB181'},
+        {n:'SE13 Peanut',h:'#BC9D77'},{n:'SE14 Toffee',h:'#AC7F5D'},{n:'SE15 Bark',h:'#A37E66'},
+        {n:'SG1 Glow Yellow',h:'#C6C0B4'},{n:'SG2 Glow Pink',h:'#DFABBC'},{n:'SG3 Glow Blue',h:'#6FADC1'},
+        {n:'SL1 Glitter Blue',h:'#3687B2'},{n:'SL2 Glitter Green',h:'#117C52'},{n:'SL3 Glitter Red',h:'#C22933'},
+        {n:'SL4 Glitter Yellow',h:'#CDBD00'},{n:'SN1 Neon Orange',h:'#FF7405'},{n:'SN2 Neon Green',h:'#01C63E'},
+        {n:'SN3 Neon Yellow',h:'#F2F33C'},{n:'SN4 Neon Rose',h:'#FF477A'},{n:'SP1 Pearlescent Green',h:'#93CA87'},
+        {n:'SP2 Pearlescent Tangerine',h:'#FE7F54'},{n:'SP3 Pearlescent Orange',h:'#F0A149'},{n:'SP4 Pearlescent Pink',h:'#DC9EA9'},
+        {n:'SP5 Pearlescent Red',h:'#D63C53'},{n:'SP6 Pearlescent Blue',h:'#2C4E97'},{n:'SP7 Pearlescent Purple',h:'#64427E'},
+        {n:'SP8 Pearlescent White',h:'#E0DBCA'},{n:'ST1 Transparent',h:'#C7BCB8'},{n:'ST2 Transparent Pink',h:'#F95498'},
+        {n:'ST3 Transparent Tangering',h:'#FF7C45'},{n:'ST4 Transparent Yellow',h:'#DADF3D'},{n:'ST5 Transparent Green',h:'#0FAE58'},
+        {n:'ST6 Transparent Purple',h:'#8477B3'},
+      ]
+    },
+
+    hama: {
+      label: 'Hama 5mm (92色)',
+      colors: [
+        {n:'H01 White',h:'#E5ECF1'},{n:'H02 Cream',h:'#E4E4C5'},{n:'H03 Yellow',h:'#E9C704'},
+        {n:'H04 Orange',h:'#D14803'},{n:'H05 Red',h:'#B4060E'},{n:'H06 Pink',h:'#EA8AA5'},
+        {n:'H07 Purple',h:'#712297'},{n:'H08 Blue',h:'#0239A3'},{n:'H09 Light Blue',h:'#025BC3'},
+        {n:'H10 Green',h:'#027643'},{n:'H11 Light Green',h:'#19CDA7'},{n:'H12 Brown',h:'#3E271A'},
+        {n:'H13 Transparent Red',h:'#C02435'},{n:'H14 Transparent Yellow',h:'#E4AA32'},{n:'H16 Transparent Green',h:'#37B876'},
+        {n:'H17 Grey',h:'#838F98'},{n:'H18 Black',h:'#141315'},{n:'H19 Clear',h:'#D8D2CE'},
+        {n:'H20 Reddish Brown',h:'#8D2A0F'},{n:'H21 Light Brown',h:'#BE6C21'},{n:'H22 Dark Red',h:'#91020A'},
+        {n:'H24 Translucent Purple',h:'#683E9A'},{n:'H25 Translucent Brown',h:'#87593D'},{n:'H26 Matt Rose',h:'#E8A498'},
+        {n:'H27 Beige',h:'#DCB18E'},{n:'H28 Dark Green',h:'#1E2C1C'},{n:'H29 Claret',h:'#BF0142'},
+        {n:'H30 Burgundy',h:'#4E0C1B'},{n:'H31 Turquoise',h:'#489AB9'},{n:'H32 Neon Fuchsia',h:'#FF208D'},
+        {n:'H33 Cerise',h:'#FF3956'},{n:'H34 Neon Yellow',h:'#E5EF13'},{n:'H35 Neon Red',h:'#FF2833'},
+        {n:'H36 Neon Blue',h:'#2353B0'},{n:'H37 Neon Green',h:'#06B73C'},{n:'H38 Neon Orange',h:'#FD8600'},
+        {n:'H39 Fluorescent Yellow',h:'#F1F21C'},{n:'H40 Fluorescent Orange',h:'#FE630B'},{n:'H41 Fluorescent Blue',h:'#2659B2'},
+        {n:'H42 Fluorescent Green',h:'#0CBD51'},{n:'H43 Pastel Yellow',h:'#E7E45A'},{n:'H44 Pastel Red',h:'#F96160'},
+        {n:'H45 Pastel Purple',h:'#8E69CD'},{n:'H46 Pastel Blue',h:'#51AEE4'},{n:'H47 Pastel Green',h:'#80DF96'},
+        {n:'H48 Pastel Pink',h:'#D67AD1'},{n:'H49 Azure',h:'#0FACD1'},{n:'H60 Teddybear Brown',h:'#F0981E'},
+        {n:'H70 Light Grey',h:'#A5B3C0'},{n:'H71 Dark Grey',h:'#445059'},{n:'H75 Tan',h:'#B78C6D'},
+        {n:'H76 Nougat',h:'#8A5937'},{n:'H77 Cloudy White',h:'#CED1C8'},{n:'H78 Light Peach',h:'#F7C1AA'},
+        {n:'H79 Apricot',h:'#F87633'},{n:'H82 Plum',h:'#91175A'},{n:'H83 Petrol Blue',h:'#037A9F'},
+        {n:'H84 Olive Green',h:'#687836'},{n:'H95 Pastel Rose',h:'#DD9BA3'},{n:'H96 Pastel Lilac',h:'#B491AD'},
+        {n:'H97 Pastel Ice Blue',h:'#8AAFC2'},{n:'H98 Pastel Mint',h:'#94CCA4'},{n:'H15 Transparent Blue',h:'#487ED5'},
+        {n:'H55 Green (Glow in the Dark)',h:'#FAF8ED'},{n:'H56 Red (Glow in the Dark)',h:'#EDBF9F'},{n:'H57 Blue (Glow in the Dark)',h:'#C4D0E3'},
+        {n:'H61 Gold',h:'#D99350'},{n:'H62 Silver',h:'#48474A'},{n:'H63 Bronze',h:'#42312F'},
+        {n:'H64 Pearl',h:'#EFEBE4'},{n:'H72 Translucent Pink',h:'#F097B0'},{n:'H73 Translucent Aqua',h:'#59AEF5'},
+        {n:'H74 Translucent Lilac',h:'#5B55BD'},{n:'H101 Eucalyptus',h:'#A9C39B'},{n:'H102 Forest Green',h:'#356B2D'},
+        {n:'H103 Light Yellow',h:'#FFE660'},{n:'H104 Lime',h:'#BCD122'},{n:'H105 Light Apricot',h:'#FFAC78'},
+        {n:'H106 Light Lavender',h:'#CCC5ED'},{n:'H107 Lavender',h:'#6A87C1'},{n:'H108 Aubergine',h:'#2A2536'},
+        {n:'H109 Cloudy Grey',h:'#8A847F'},{n:'H110 Matcha',h:'#838956'},{n:'H111 Dark Blush',h:'#835854'},
+        {n:'H112 Blush',h:'#AD8A82'},{n:'H113 Aqua',h:'#5F887B'},{n:'H114 Cherry Red',h:'#9A2C31'},
+        {n:'H115 Bright Green',h:'#6E975F'},{n:'H116 Midnight Blue',h:'#222838'},{n:'H117 Taupe Grey',h:'#777169'},
+        {n:'H118 Maroon Red',h:'#612932'},{n:'H119 Sky Blue',h:'#4167B4'},
+      ]
+    },
+
+    artkalMini: {
+      label: 'Artkal C 2.6mm (174色)',
+      colors: [
+        {n:'C01 White',h:'#EAEEF3'},{n:'C02 Black',h:'#292A2B'},{n:'C03 Tangerine',h:'#FFA630'},
+        {n:'C04 Yellow Orange',h:'#E68739'},{n:'C05 Tall Poppy',h:'#CB3531'},{n:'C06 Red',h:'#B61927'},
+        {n:'C07 Carnation Pink',h:'#E182B0'},{n:'C08 Hot Pink',h:'#DC519A'},{n:'C09 Magenta',h:'#DA4383'},
+        {n:'C10 Picasso',h:'#EADE7F'},{n:'C11 Yellow',h:'#EAC125'},{n:'C12 Pistachio',h:'#97CF87'},
+        {n:'C13 Pastel Green',h:'#8BB23A'},{n:'C14 Green',h:'#009053'},{n:'C15 Green Tea',h:'#00765F'},
+        {n:'C16 Bright Carrot',h:'#F96F40'},{n:'C17 Orange',h:'#EB6027'},{n:'C18 Sky Blue',h:'#A7CDDE'},
+        {n:'C19 Baby Blue',h:'#2EABD8'},{n:'C20 Light Blue',h:'#0084CE'},{n:'C21 Dark Blue',h:'#004FA4'},
+        {n:'C22 Bubble Gun',h:'#F2BFB8'},{n:'C23 Sand',h:'#DCA384'},{n:'C24 Beeswax',h:'#EED39E'},
+        {n:'C25 Lavender',h:'#8A7EC2'},{n:'C26 Pastel Lavender',h:'#9165B2'},{n:'C27 Purple',h:'#48337E'},
+        {n:'C28 Marigold',h:'#B27938'},{n:'C29 Buccaneer',h:'#B35540'},{n:'C30 Redwood',h:'#9A4541'},
+        {n:'C31 Light Brown',h:'#895D49'},{n:'C32 Brown',h:'#65463D'},{n:'C33 Gray',h:'#959698'},
+        {n:'C34 Dark Gray',h:'#70757B'},{n:'C35 Silver',h:'#676B73'},{n:'C36 Old Pink',h:'#CE6D83'},
+        {n:'C37 True Blue',h:'#0078BF'},{n:'C38 Turquoise',h:'#55A4D9'},{n:'C39 Shadow Green',h:'#9EC9CD'},
+        {n:'C40 Key Lomen Pie',h:'#CDC03F'},{n:'C41 Pastel Yellow',h:'#E1D367'},{n:'C42 Sandstorm',h:'#E1C835'},
+        {n:'C43 Paprika',h:'#B11836'},{n:'C44 Burning Sand',h:'#EE927C'},{n:'C46 Canary',h:'#E2E65D'},
+        {n:'C47 Vanilla',h:'#E9C1A6'},{n:'C48 Corn',h:'#ECC03D'},{n:'C49 Raspberry Pink',h:'#EF67B2'},
+        {n:'C50 Maverick',h:'#C0B7D7'},{n:'C51 Spring Sun',h:'#DFDABD'},{n:'C52 Butterfly Bush',h:'#4F3989'},
+        {n:'C53 Bright Green',h:'#8EC324'},{n:'C54 Medium Turquoise',h:'#00A5A1'},{n:'C56 Oslo Gray',h:'#82878B'},
+        {n:'C58 Black Rock',h:'#36384D'},{n:'C60 Sea Mist',h:'#B2D7CE'},{n:'C69 Mine Shaft',h:'#383E44'},
+        {n:'C70 Brunswick Green',h:'#153838'},{n:'C71 Goldenrod',h:'#E8AE00'},{n:'C72 Pastel Orange',h:'#D9B35E'},
+        {n:'C73 Sienna',h:'#BB6833'},{n:'C74 Deer',h:'#CDB277'},{n:'C75 Clay',h:'#AA744E'},
+        {n:'C76 Coral Red',h:'#EC625E'},{n:'C77 Deep Chestnut',h:'#BE5D65'},{n:'C78 Red Wine',h:'#99323A'},
+        {n:'C79 Light Sea Blue',h:'#68C4D2'},{n:'C80 Sea Blue',h:'#0093A9'},{n:'C81 Steel Blue',h:'#5AB0BF'},
+        {n:'C82 Azure',h:'#009EC2'},{n:'C83 Dark Steel Blue',h:'#0084B2'},{n:'C84 Drark Algae',h:'#ADAD29'},
+        {n:'C85 Dark Olive',h:'#8F8E3C'},{n:'C86 Jade Green',h:'#007D2B'},{n:'C87 Ghost While',h:'#D4D8D3'},
+        {n:'C88 Ash Grey',h:'#C2C4C2'},{n:'C89 Light Gray',h:'#A7ACAD'},{n:'C90 Charcoal Gray',h:'#565A5E'},
+        {n:'C91 Dandelion',h:'#CEA433'},{n:'C92 Pale Skin',h:'#DCB794'},{n:'C93 Warm Blush',h:'#DD9285'},
+        {n:'C94 Salmon',h:'#E07B69'},{n:'C95 Apricot',h:'#EF7F61'},{n:'C96 Papaya',h:'#DC772B'},
+        {n:'C97 Himalaya Blue',h:'#6AAEDB'},{n:'C98 Waterfall',h:'#61BBD3'},{n:'C99 Lagoon',h:'#279BBE'},
+        {n:'C100 Electric Blue',h:'#00A7E3'},{n:'C101 Pool Blue',h:'#0077CA'},{n:'C102 Caribbian Blue',h:'#005AA9'},
+        {n:'C103 Deep Water',h:'#007F9E'},{n:'C104 Petrol Blue',h:'#007D91'},{n:'C105 Wegdewood Blue',h:'#00649A'},
+        {n:'C106 Pond Blue',h:'#006C9F'},{n:'C107 Seashell Beige',h:'#CFC179'},{n:'C108 Beige',h:'#C4AE64'},
+        {n:'C109 Beach Beige',h:'#AB9745'},{n:'C110 Caffe Latté',h:'#978138'},{n:'C111 Oaktree Brown',h:'#907C41'},
+        {n:'C112 Khaki',h:'#B6AE84'},{n:'C113 Light Greengray',h:'#A59F65'},{n:'C114 Mossy Green',h:'#938D54'},
+        {n:'C115 Earth Green',h:'#8D8B51'},{n:'C116 Sage Green',h:'#7F7E49'},{n:'C117 Pinetree Green',h:'#5B6E35'},
+        {n:'C118 Frosty Blue',h:'#8AD5C9'},{n:'C119 Polar Mint',h:'#7CD2A5'},{n:'C120 Celadon Green',h:'#72AC9A'},
+        {n:'C121 Eucalyptus',h:'#00B26F'},{n:'C122 Clover Field',h:'#3EB724'},{n:'C123 Pooltable Felt',h:'#0D7535'},
+        {n:'C124 Snake Green',h:'#007D6E'},{n:'C125 Dark Eucalyptus',h:'#006E69'},{n:'C126 Marsmallow Rose',h:'#DFC3E1'},
+        {n:'C127 Light Grape',h:'#D38ED4'},{n:'C128 Rosebud Pink',h:'#D5A6BA'},{n:'C129 Fuschia',h:'#D6668E'},
+        {n:'C130 Candy Violet',h:'#B8AAD9'},{n:'C131 Flamingo',h:'#DF486D'},{n:'C132 Pink Plum',h:'#BC3CA6'},
+        {n:'C133 Amethyst',h:'#803897'},{n:'C134 Moonlight Blue',h:'#A7BAE1'},{n:'C135 Summer Rain',h:'#AFB8DF'},
+        {n:'C136 Azur Blue',h:'#6B9AD4'},{n:'C137 Cornflower Blue',h:'#5A89CE'},{n:'C138 Forget Me Not',h:'#658AD0'},
+        {n:'C139 Indigo',h:'#566CBD'},{n:'C140 Horizon Blue',h:'#4D74C6'},{n:'C141 Cobolt',h:'#416DBE'},
+        {n:'C142 Royal Blue',h:'#30429E'},{n:'C143 Marine',h:'#024288'},{n:'C144 Pale Yellow Moss',h:'#D6CA6A'},
+        {n:'C145 Bloodrose Red',h:'#9D1A38'},{n:'C146 Spearmint',h:'#80B7A1'},{n:'C147 Mocha',h:'#7A594F'},
+        {n:'C148 Creme',h:'#EFDBA1'},{n:'C149 Iris Violet',h:'#8884D0'},{n:'C150 Forrest Green',h:'#345621'},
+        {n:'C151 Lilac',h:'#AEADDC'},{n:'C152 Pale Lilac',h:'#BCC3E1'},{n:'C153 Sahara Sand',h:'#E3C09A'},
+        {n:'C154 Sunkissed Teint',h:'#C58B60'},{n:'C155 Steel Grey',h:'#5A5F65'},{n:'C156 Iron Grey',h:'#4C5156'},
+        {n:'C157 Pepper',h:'#3A3E42'},{n:'C45 Spring Green',h:'#5DDB5D'},{n:'C55 Conifer',h:'#6CC24A'},
+        {n:'C57 Fresh Red',h:'#BC0423'},{n:'C59 Scarlett',h:'#531A23'},{n:'C61 Feta',h:'#F1EB9C'},
+        {n:'C62 Carnation',h:'#FC3F3F'},{n:'C63 Pink Pearl',h:'#EABEDB'},{n:'C64 Rose',h:'#A50050'},
+        {n:'C65 Mango',h:'#EF7E2E'},{n:'C66 Wild Watermelon',h:'#FC6C85'},{n:'C67 Orchid',h:'#B14EB5'},
+        {n:'C68 Toothpaste Blue',h:'#69C2EE'},{n:'CE01 Columbia Blue',h:'#C3CED6'},{n:'CE02 Pale Cerulean',h:'#9AB2DB'},
+        {n:'CE03 Silver Lake Blue',h:'#5D88B2'},{n:'CE04 Sky Blue (Crayola)',h:'#02BDD1'},{n:'CE05 Maximum Blue Green',h:'#52CAAC'},
+        {n:'CE06 Bright Navy Blue',h:'#2D6DB2'},{n:'CE07 Black Shadows',h:'#C2A3B7'},{n:'CE08 Mountbatten Pink',h:'#8A5877'},
+        {n:'CE09 Halayà Úbe',h:'#68355D'},{n:'CE10 Deep Mauve',h:'#B84FA8'},{n:'CE11 Heliotrope Magenta',h:'#B02FA4'},
+        {n:'CE12 Rajah',h:'#E2A365'},{n:'CE13 Earth Yellow',h:'#BE8E59'},{n:'CE14 Chinese Bronze',h:'#A87443'},
+        {n:'CE15 Alloy Orange',h:'#A06E52'},{n:'CE16 Orchid Pink',h:'#F9C1D7'},{n:'CE17 Caput Mortuum',h:'#59292B'},
+      ]
+    }
+  };
+
+  // ================================================================
+  //  Fidelity → (size, colors) 映射
+  //  slider 0-100: 先增颜色(0-40), 然后颜色+尺寸一起增(40-100)
+  // ================================================================
+  function fidelityToParams(pct) {
+    const palLen = activePalette.length;
+    const minS = 15, maxS = 116;
+    const minC = 4, maxC = palLen;
+
+    if (pct <= 40) {
+      // 0-40: 尺寸 15→35, 颜色 4→max的40%
+      const t = pct / 40;
+      const s = Math.round(minS + t * 20);
+      const c = Math.round(minC + t * (Math.min(maxC, 40) - minC));
+      return { size: s, colors: clamp(c, minC, maxC) };
+    } else {
+      // 40-100: 尺寸 35→116, 颜色 继续增→palLen
+      const t = (pct - 40) / 60;
+      const s = Math.round(35 + t * (maxS - 35));
+      const c40 = Math.min(maxC, 40);
+      const c = Math.round(c40 + t * (maxC - c40));
+      return { size: clamp(s, minS, maxS), colors: clamp(c, minC, maxC) };
+    }
+  }
+
+  // ================================================================
+  //  State
+  // ================================================================
+  const $ = id => document.getElementById(id);
+  const homeSection   = $('homeSection');
+  const resultSection = $('resultSection');
+  const uploadZone    = $('uploadZone');
+  const fileInput     = $('fileInput');
+  const colorCountEl  = $('colorCount');
+  const colorCountVal = $('colorCountValue');
+  const gridWInput    = $('gridW');
+  const gridHInput    = $('gridH');
+  const paletteBrand  = $('paletteBrand');
+  const generateBtn   = $('generateBtn');
+  const createBlankBtn = $('createBlankBtn');
+  const progressWrap  = $('progressWrap');
+  const progressFill  = $('progressFill');
+  const progressText  = $('progressText');
+  const diffTiers     = $('diffTiers');
+  const fidelitySlider = $('fidelitySlider');
+  const fidelityInfo  = $('fidelityInfo');
+  const fidelityCard  = $('fidelityCard');
+  const patternCanvas = $('patternCanvas');
+  const patternTable  = $('patternTable');
+  const patternScroll = $('patternScroll');
+  const patternStage  = $('patternStage');
+  const saveBtn       = $('saveBtn');
+  const backBtn       = $('backBtn');
+  const toolsBtn      = $('toolsBtn');
+  const statsBtn      = $('statsBtn');
+  const beadCountTag  = $('beadCount');
+  const beadCount2    = $('beadCount2');
+  const colorStatsEl  = $('colorStats');
+  const paletteGrid   = $('paletteGrid');
+  const drawerTools   = $('drawerTools');
+
+  let mode = 'import';
+  let uploadedImage = null;
+  let difficulty = 'easy';
+  let activeBrand = 'artkal5';
+  let activePalette = PALETTES.artkal5.colors;
+  let allRgb = activePalette.map(b => hexToRgb(b.h));
+
+  let grid = null, gW = 29, gH = 29;
+  let usedIndices = []; // global palette indices actually used
+  let currentTool = 'pencil';
+  let selColorIdx = 0;
+  let undoStack = [];
+  const MAX_UNDO = 40;
+  let fidelityValue = 15; // default
+  let fullscreenRotation = 0;
+  let previewLayout = null;
+  const EMPTY = -1;
+
+  // short ref code: extract first token from name (e.g. "S01" from "S01 White")
+  function shortRef(name) {
+    return name.split(' ')[0];
+  }
+
+  function paramsToFidelity(size, colors) {
+    let bestPct = 0;
+    let bestScore = Infinity;
+    for (let pct = 0; pct <= 100; pct++) {
+      const p = fidelityToParams(pct);
+      const score = Math.abs(p.size - size) * 2 + Math.abs(p.colors - colors);
+      if (score < bestScore) {
+        bestScore = score;
+        bestPct = pct;
+      }
+    }
+    return bestPct;
+  }
+
+  // ================================================================
+  //  Home controls
+  // ================================================================
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      $('importMode').classList.toggle('hidden', mode !== 'import');
+      $('blankMode').classList.toggle('hidden', mode !== 'blank');
+      $('importSettings').classList.toggle('hidden', mode !== 'import');
+      generateBtn.classList.toggle('hidden', mode !== 'import');
+      createBlankBtn.classList.toggle('hidden', mode !== 'blank');
+    });
+  });
+
+  diffTiers.addEventListener('click', e => {
+    const b = e.target.closest('.diff-btn');
+    if (!b) return;
+    diffTiers.querySelectorAll('.diff-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    difficulty = b.dataset.diff;
+    applyDifficultyDefaults();
+  });
+
+  function applyDifficultyDefaults() {
+    const preset = DIFF_PRESETS[difficulty];
+    gridWInput.value = preset.size;
+    gridHInput.value = preset.size;
+    syncColorSlider(true);
+  }
+
+  function syncColorSlider(setDefault) {
+    const palLen = activePalette.length;
+    colorCountEl.max = palLen;
+    if (setDefault) {
+      const preset = DIFF_PRESETS[difficulty];
+      const defC = preset.maxColors ? Math.min(preset.defaultColors, palLen) : palLen;
+      colorCountEl.value = defC;
+    } else {
+      colorCountEl.value = Math.min(parseInt(colorCountEl.value || '16', 10), palLen);
+    }
+    colorCountVal.textContent = colorCountEl.value;
+  }
+
+  colorCountEl.addEventListener('input', () => { colorCountVal.textContent = colorCountEl.value; });
+
+  // ================================================================
+  //  Upload
+  // ================================================================
+  uploadZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', handleFile);
+
+  function handleFile() {
+    const f = fileInput.files[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { alert('请选择图片文件哦~'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        uploadedImage = img;
+        uploadZone.innerHTML = '';
+        const preview = document.createElement('img');
+        preview.src = URL.createObjectURL(f);
+        preview.alt = '预览';
+        uploadZone.appendChild(preview);
+        uploadZone.classList.add('has-image');
+        generateBtn.disabled = false;
+      };
+      img.onerror = () => { alert('图片加载失败，请尝试其他图片~'); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  }
+
+  paletteBrand.addEventListener('change', () => {
+    activeBrand = paletteBrand.value;
+    activePalette = PALETTES[activeBrand].colors;
+    allRgb = activePalette.map(b => hexToRgb(b.h));
+    syncColorSlider(false);
+  });
+
+  // ================================================================
+  //  Generate
+  // ================================================================
+  generateBtn.addEventListener('click', doGenerate);
+  createBlankBtn.addEventListener('click', doBlank);
+
+  async function doGenerate() {
+    if (!uploadedImage) return;
+    generateBtn.disabled = true;
+    showProgress(true);
+    setProgress(0, '正在分析图片...');
+    await tick();
+
+    gW = clamp(parseInt(gridWInput.value) || 29, 1, 116);
+    gH = clamp(parseInt(gridHInput.value) || 29, 1, 116);
+    const colors = clamp(parseInt(colorCountEl.value) || 16, 2, activePalette.length);
+    fidelityValue = paramsToFidelity(Math.max(gW, gH), colors);
+    fidelitySlider.value = fidelityValue;
+
+    setProgress(20, '正在缩放图片...');
+    await tick();
+
+    const pd = adjustedPixels(uploadedImage, gW, gH);
+
+    setProgress(50, '正在匹配拼豆色...');
+    await tick();
+
+    grid = quantize(pd, gW, gH, colors);
+    undoStack = [];
+
+    setProgress(80, '正在绘制图纸...');
+    await tick();
+
+    buildPatternTable();
+    updateStats();
+    enterResult(true);
+
+    setProgress(100, '完成！🎉');
+    await delay(300);
+    showProgress(false);
+    generateBtn.disabled = false;
+  }
+
+  function doBlank() {
+    gW = clamp(parseInt(gridWInput.value) || 29, 1, 116);
+    gH = clamp(parseInt(gridHInput.value) || 29, 1, 116);
+    grid = [];
+    for (let y = 0; y < gH; y++) {
+      const row = [];
+      for (let x = 0; x < gW; x++) row.push(0);
+      grid.push(row);
+    }
+    undoStack = [];
+    buildPatternTable();
+    updateStats();
+    enterResult(false);
+  }
+
+  function regenerate() {
+    if (!uploadedImage || mode !== 'import') return;
+    const params = fidelityToParams(fidelityValue);
+    gW = params.size; gH = params.size;
+    const pd = adjustedPixels(uploadedImage, gW, gH);
+    grid = quantize(pd, gW, gH, params.colors);
+    undoStack = [];
+    buildPatternTable();
+    updateStats();
+    fidelityInfo.textContent = gW + '×' + gH + ' · ' + params.colors + '色';
+  }
+
+  // ================================================================
+  //  Fidelity slider
+  // ================================================================
+  fidelitySlider.addEventListener('input', () => {
+    fidelityValue = parseInt(fidelitySlider.value);
+    const p = fidelityToParams(fidelityValue);
+    fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+  });
+
+  let fidelityTimer = null;
+  fidelitySlider.addEventListener('change', () => {
+    fidelityValue = parseInt(fidelitySlider.value);
+    clearTimeout(fidelityTimer);
+    fidelityTimer = setTimeout(regenerate, 150);
+  });
+
+  function showProgress(on) { progressWrap.classList.toggle('show', on); }
+  function setProgress(pct, txt) { progressFill.style.width = pct + '%'; progressText.textContent = txt; }
+
+  // ================================================================
+  //  Enter / Leave result
+  // ================================================================
+  function enterResult(showFidelity) {
+    homeSection.style.display = 'none';
+    resultSection.classList.add('show');
+    fidelityCard.classList.toggle('hidden', !showFidelity);
+    if (showFidelity) {
+      const p = fidelityToParams(fidelityValue);
+      fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+    }
+    requestAnimationFrame(autoFitPatternView);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  backBtn.addEventListener('click', () => {
+    resultSection.classList.remove('show');
+    homeSection.style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ================================================================
+  //  Build pattern table (like reference image)
+  // ================================================================
+  function buildPatternTable() {
+    // Collect used indices
+    const usedSet = new Set();
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++)
+        if (grid[y][x] >= 0) usedSet.add(grid[y][x]);
+    usedIndices = [...usedSet].sort((a, b) => a - b);
+
+    let html = '<thead><tr><th class="corner row-hdr"></th>';
+    for (let x = 1; x <= gW; x++) {
+      const cls = (x % 5 === 1) ? ' grid5-c' : '';
+      html += '<th class="' + cls + '">' + x + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+
+    for (let y = 0; y < gH; y++) {
+      const r5 = ((y + 1) % 5 === 1) ? ' grid5-r' : '';
+      html += '<tr><th class="row-hdr' + r5 + '">' + (y + 1) + '</th>';
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const b = activePalette[ci];
+        const bg = b ? b.h : '#E0D6D9';
+        const ref = b ? shortRef(b.n) : '';
+        // text color: dark bg -> white text
+        const lum = b ? luminance(b.h) : 200;
+        const fg = lum < 100 ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+        const c5 = (x % 5 === 0) ? ' grid5-c' : '';
+        html += '<td class="bead-cell' + r5 + c5 + '" style="background:' + bg + ';color:' + fg + '" data-x="' + x + '" data-y="' + y + '">' + ref + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+
+    // Bottom legend row
+    html += '<tfoot><tr><th class="corner row-hdr"></th>';
+    for (let x = 1; x <= gW; x++) {
+      const cls = (x % 5 === 1) ? ' grid5-c' : '';
+      html += '<th class="' + cls + '">' + x + '</th>';
+    }
+    html += '</tr></tfoot>';
+
+    patternTable.innerHTML = html;
+    requestAnimationFrame(() => {
+      autoFitPatternView();
+      renderPatternPreview();
+    });
+  }
+
+  function autoFitPatternView() {
+    if (!grid) return;
+    const pad = 16;
+    const availW = Math.max(patternScroll.clientWidth - pad, 120);
+    const availH = Math.max(Math.min(window.innerHeight * 0.62, 620) - pad, 180);
+    const header = clamp(Math.floor(Math.min(availW, availH) / 20), 10, 18);
+    const cellW = Math.floor((availW - header * 2) / gW);
+    const cellH = Math.floor((availH - header * 2) / gH);
+    const cell = clamp(Math.min(cellW, cellH), 5, 18);
+    const width = header * 2 + cell * gW;
+    const height = header * 2 + cell * gH;
+    previewLayout = { header, cell, width, height };
+    patternScroll.style.height = (height + 16) + 'px';
+  }
+
+  function renderPatternPreview() {
+    if (!grid || !previewLayout) return;
+    drawPatternToCanvas(patternCanvas, previewLayout, false);
+  }
+
+  function drawPatternToCanvas(canvas, layout, forFullscreen) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(layout.width * dpr);
+    canvas.height = Math.round(layout.height * dpr);
+    canvas.style.width = layout.width + 'px';
+    canvas.style.height = layout.height + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, layout.width, layout.height);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, layout.width, layout.height);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 ' + Math.max(7, Math.floor(layout.header * 0.45)) + 'px Courier New';
+    ctx.fillStyle = '#9B7E9E';
+    for (let x = 0; x < gW; x++) {
+      const cx = layout.header + x * layout.cell + layout.cell / 2;
+      ctx.fillText(String(x + 1), cx, layout.header / 2);
+      ctx.fillText(String(x + 1), cx, layout.height - layout.header / 2);
+    }
+    for (let y = 0; y < gH; y++) {
+      const cy = layout.header + y * layout.cell + layout.cell / 2;
+      ctx.fillText(String(y + 1), layout.header / 2, cy);
+      ctx.fillText(String(y + 1), layout.width - layout.header / 2, cy);
+    }
+
+    const textSize = Math.max(4, Math.floor(layout.cell * 0.28));
+    ctx.font = '700 ' + textSize + 'px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const bead = ci >= 0 ? activePalette[ci] : null;
+        const px = layout.header + x * layout.cell;
+        const py = layout.header + y * layout.cell;
+        ctx.fillStyle = bead ? bead.h : '#FFFFFF';
+        ctx.fillRect(px, py, layout.cell, layout.cell);
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px, py, layout.cell, layout.cell);
+        if (bead) {
+          ctx.fillStyle = luminance(bead.h) < 100 ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.62)';
+          ctx.fillText(shortRef(bead.n), px + layout.cell / 2, py + layout.cell / 2);
+        }
+      }
+    }
+
+    if (!forFullscreen) {
+      ctx.strokeStyle = 'rgba(255,107,157,0.08)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+        if (i <= gW) {
+          const xp = layout.header + i * layout.cell;
+          ctx.beginPath(); ctx.moveTo(xp, layout.header); ctx.lineTo(xp, layout.height - layout.header); ctx.stroke();
+        }
+        if (i <= gH) {
+          const yp = layout.header + i * layout.cell;
+          ctx.beginPath(); ctx.moveTo(layout.header, yp); ctx.lineTo(layout.width - layout.header, yp); ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function luminance(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+
+  // ================================================================
+  //  Fullscreen view
+  // ================================================================
+  const overlay = $('fullscreenOverlay');
+  const fsInner = $('fullscreenInner');
+
+  patternScroll.addEventListener('click', openFullscreen);
+
+  function openFullscreen() {
+    fullscreenRotation = 0;
+    fsInner.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    const cell = 24;
+    const header = 18;
+    drawPatternToCanvas(canvas, {
+      cell,
+      header,
+      width: header * 2 + cell * gW,
+      height: header * 2 + cell * gH
+    }, true);
+    fsInner.appendChild(canvas);
+    fsInner.style.transform = '';
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  $('fullscreenClose').addEventListener('click', closeFullscreen);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeFullscreen(); });
+
+  function closeFullscreen() {
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  $('rotateBtn').addEventListener('click', () => {
+    fullscreenRotation = (fullscreenRotation + 90) % 360;
+    fsInner.style.transform = 'rotate(' + fullscreenRotation + 'deg)';
+  });
+
+  $('fullscreenSaveBtn').addEventListener('click', () => { doSave(); });
+
+  // ================================================================
+  //  Drawer: Tools
+  // ================================================================
+  const toolsOverlay = $('toolsOverlay');
+  const toolsDrawer = $('toolsDrawer');
+
+  toolsBtn.addEventListener('click', () => {
+    buildPaletteUI();
+    toolsOverlay.classList.add('show');
+    toolsDrawer.classList.add('show');
+  });
+  toolsOverlay.addEventListener('click', closeTools);
+  function closeTools() {
+    toolsOverlay.classList.remove('show');
+    toolsDrawer.classList.remove('show');
+  }
+
+  drawerTools.addEventListener('click', e => {
+    const btn = e.target.closest('.dtool-btn');
+    if (!btn) return;
+    const tool = btn.dataset.tool;
+    if (tool === 'undo') { undo(); return; }
+    currentTool = tool;
+    drawerTools.querySelectorAll('.dtool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  });
+
+  function buildPaletteUI() {
+    paletteGrid.innerHTML = '';
+    // Show only used colors + full palette
+    activePalette.forEach((b, i) => {
+      const el = document.createElement('div');
+      el.className = 'palette-swatch' + (i === selColorIdx ? ' selected' : '');
+      el.style.background = b.h;
+      el.title = b.n;
+      el.dataset.idx = i;
+      el.addEventListener('click', () => {
+        selColorIdx = i;
+        paletteGrid.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+      paletteGrid.appendChild(el);
+    });
+  }
+
+  // ================================================================
+  //  Canvas interaction on preview
+  // ================================================================
+  let isDrawing = false;
+
+  patternCanvas.addEventListener('pointerdown', e => {
+    if (currentTool === 'move') return;
+    const cell = previewCellAt(e);
+    if (!cell) return;
+    isDrawing = true;
+    applyToolAt(cell.x, cell.y);
+  });
+
+  patternCanvas.addEventListener('pointermove', e => {
+    if (!isDrawing) return;
+    const cell = previewCellAt(e);
+    if (cell) applyToolAt(cell.x, cell.y);
+  });
+
+  document.addEventListener('pointerup', () => { isDrawing = false; });
+
+  function previewCellAt(e) {
+    if (!previewLayout) return null;
+    const rect = patternCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const gx = Math.floor((x - previewLayout.header) / previewLayout.cell);
+    const gy = Math.floor((y - previewLayout.header) / previewLayout.cell);
+    if (gx < 0 || gy < 0 || gx >= gW || gy >= gH) return null;
+    return { x: gx, y: gy };
+  }
+
+  function applyToolAt(x, y) {
+    if (currentTool === 'pencil') {
+      if (grid[y][x] === selColorIdx) return;
+      pushUndo();
+      grid[y][x] = selColorIdx;
+      renderPatternPreview();
+      updateStats();
+    } else if (currentTool === 'eraser') {
+      if (grid[y][x] === EMPTY) return;
+      pushUndo();
+      grid[y][x] = EMPTY;
+      renderPatternPreview();
+      updateStats();
+    }
+  }
+
+  // ================================================================
+  //  Undo
+  // ================================================================
+  function pushUndo() {
+    undoStack.push(grid.map(r => [...r]));
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    grid = undoStack.pop();
+    buildPatternTable();
+    updateStats();
+  }
+
+  // ================================================================
+  //  Drawer: Stats
+  // ================================================================
+  const statsOverlay = $('statsOverlay');
+  const statsDrawer = $('statsDrawer');
+
+  statsBtn.addEventListener('click', () => {
+    updateStats();
+    statsOverlay.classList.add('show');
+    statsDrawer.classList.add('show');
+  });
+  statsOverlay.addEventListener('click', () => {
+    statsOverlay.classList.remove('show');
+    statsDrawer.classList.remove('show');
+  });
+
+  // ================================================================
+  //  Stats
+  // ================================================================
+  function updateStats() {
+    if (!grid) return;
+    const cnt = {};
+    let tot = 0;
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i < 0) continue;
+        cnt[i] = (cnt[i] || 0) + 1;
+        tot++;
+      }
+    beadCountTag.textContent = '共 ' + tot + ' 颗';
+    beadCount2.textContent = '共 ' + tot + ' 颗';
+
+    const sorted = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+    colorStatsEl.innerHTML = sorted.map(([idx, c]) => {
+      const b = activePalette[parseInt(idx)];
+      const name = b ? b.n : '?';
+      const hex = b ? b.h : '#CCC';
+      return '<div class="color-chip"><div class="color-dot" style="background:' + hex + '"></div>' + name + ' × ' + c + '</div>';
+    }).join('');
+  }
+
+  // ================================================================
+  //  Save as image (render to canvas then download)
+  // ================================================================
+  function doSave() {
+    if (!grid) return;
+    const cellSize = 24;
+    const hdrSize = 16;
+    const cw = hdrSize + cellSize * gW + hdrSize;
+    const ch = hdrSize + cellSize * gH + hdrSize;
+
+    const cv = document.createElement('canvas');
+    cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.font = '7px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Column headers
+    for (let x = 0; x < gW; x++) {
+      const cx = hdrSize + x * cellSize + cellSize / 2;
+      ctx.fillStyle = '#9B7E9E';
+      ctx.fillText(String(x + 1), cx, hdrSize / 2);
+      ctx.fillText(String(x + 1), cx, ch - hdrSize / 2);
+    }
+
+    // Row headers
+    for (let y = 0; y < gH; y++) {
+      const cy = hdrSize + y * cellSize + cellSize / 2;
+      ctx.fillStyle = '#9B7E9E';
+      ctx.fillText(String(y + 1), hdrSize / 2, cy);
+      ctx.fillText(String(y + 1), cw - hdrSize / 2, cy);
+    }
+
+    // Cells
+    ctx.font = 'bold 6px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const b = ci >= 0 ? activePalette[ci] : null;
+        const px = hdrSize + x * cellSize;
+        const py = hdrSize + y * cellSize;
+        ctx.fillStyle = b ? b.h : '#E0D6D9';
+        ctx.fillRect(px, py, cellSize, cellSize);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px, py, cellSize, cellSize);
+
+        // Label
+        if (b) {
+          const lum = luminance(b.h);
+          ctx.fillStyle = lum < 100 ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+          ctx.fillText(shortRef(b.n), px + cellSize / 2, py + cellSize / 2);
+        }
+      }
+    }
+
+    // 5-grid thick lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+      if (i <= gW) {
+        const xp = hdrSize + i * cellSize;
+        ctx.beginPath(); ctx.moveTo(xp, hdrSize); ctx.lineTo(xp, ch - hdrSize); ctx.stroke();
+      }
+      if (i <= gH) {
+        const yp = hdrSize + i * cellSize;
+        ctx.beginPath(); ctx.moveTo(hdrSize, yp); ctx.lineTo(cw - hdrSize, yp); ctx.stroke();
+      }
+    }
+
+    // Legend at bottom
+    const cnt = {};
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+      }
+    // (legend is in the stats drawer, image is the grid itself)
+
+    const a = document.createElement('a');
+    a.download = '拼豆图纸_' + gW + 'x' + gH + '.png';
+    a.href = cv.toDataURL('image/png');
+    a.click();
+  }
+
+  saveBtn.addEventListener('click', doSave);
+
+  // ================================================================
+  //  Image processing
+  // ================================================================
+  function adjustedPixels(img, w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    const src = detectSubjectCrop(img, w / h);
+    ctx.drawImage(img, src.sx, src.sy, src.sw, src.sh, 0, 0, w, h);
+    const id = ctx.getImageData(0, 0, w, h);
+    id.bgColor = src.bgColor || null;
+    return id;
+  }
+
+  function detectSubjectCrop(img, targetRatio) {
+    const sampleMax = 160;
+    const scale = Math.min(1, sampleMax / Math.max(img.width, img.height));
+    const sw = Math.max(24, Math.round(img.width * scale));
+    const sh = Math.max(24, Math.round(img.height * scale));
+    const c = document.createElement('canvas');
+    c.width = sw;
+    c.height = sh;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, sw, sh);
+    const data = ctx.getImageData(0, 0, sw, sh).data;
+
+    const bg = estimateBackground(data, sw, sh);
+    let minX = sw, minY = sh, maxX = -1, maxY = -1;
+    const threshold = 32;
+
+    for (let y = 0; y < sh; y++) {
+      for (let x = 0; x < sw; x++) {
+        const i = (y * sw + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const dist = Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]);
+        if (dist > threshold) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX === -1 || maxY === -1) {
+      const full = fitCrop(0, 0, img.width, img.height, targetRatio);
+      full.bgColor = bg;
+      return full;
+    }
+
+    const boxW = maxX - minX + 1;
+    const boxH = maxY - minY + 1;
+    const cover = (boxW * boxH) / (sw * sh);
+    if (cover < 0.02) {
+      const full = fitCrop(0, 0, img.width, img.height, targetRatio);
+      full.bgColor = bg;
+      return full;
+    }
+
+    const padX = Math.max(2, Math.round(boxW * 0.12));
+    const padY = Math.max(2, Math.round(boxH * 0.12));
+    minX = Math.max(0, minX - padX);
+    minY = Math.max(0, minY - padY);
+    maxX = Math.min(sw - 1, maxX + padX);
+    maxY = Math.min(sh - 1, maxY + padY);
+
+    const cropX = minX / scale;
+    const cropY = minY / scale;
+    const cropW = (maxX - minX + 1) / scale;
+    const cropH = (maxY - minY + 1) / scale;
+    const crop = fitCrop(cropX, cropY, cropW, cropH, targetRatio, img.width, img.height);
+    crop.bgColor = bg;
+    return crop;
+  }
+
+  function estimateBackground(data, w, h) {
+    const samples = [];
+    const edge = Math.max(2, Math.round(Math.min(w, h) * 0.08));
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (x < edge || y < edge || x >= w - edge || y >= h - edge) {
+          const i = (y * w + x) * 4;
+          samples.push([data[i], data[i + 1], data[i + 2]]);
+        }
+      }
+    }
+    if (!samples.length) return [255, 255, 255];
+    samples.sort((a, b) => (a[0] + a[1] + a[2]) - (b[0] + b[1] + b[2]));
+    const mid = samples[Math.floor(samples.length * 0.6)] || samples[Math.floor(samples.length / 2)];
+    return mid;
+  }
+
+  function fitCrop(sx, sy, sw, sh, targetRatio, maxW, maxH) {
+    const boundW = maxW || (sx + sw);
+    const boundH = maxH || (sy + sh);
+    let cropX = sx;
+    let cropY = sy;
+    let cropW = sw;
+    let cropH = sh;
+    const srcRatio = cropW / cropH;
+
+    if (srcRatio > targetRatio) {
+      cropH = cropW / targetRatio;
+      cropY -= (cropH - sh) / 2;
+    } else {
+      cropW = cropH * targetRatio;
+      cropX -= (cropW - sw) / 2;
+    }
+
+    if (cropX < 0) cropX = 0;
+    if (cropY < 0) cropY = 0;
+    if (cropX + cropW > boundW) cropX = boundW - cropW;
+    if (cropY + cropH > boundH) cropY = boundH - cropH;
+
+    cropX = clamp(Math.round(cropX), 0, boundW - 1);
+    cropY = clamp(Math.round(cropY), 0, boundH - 1);
+    cropW = clamp(Math.round(cropW), 1, boundW - cropX);
+    cropH = clamp(Math.round(cropH), 1, boundH - cropY);
+
+    return { sx: cropX, sy: cropY, sw: cropW, sh: cropH };
+  }
+
+  // ================================================================
+  //  Color quantization
+  // ================================================================
+  function hexToRgb(hex) {
+    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+  function colDist(a, b) {
+    const rm = (a[0] + b[0]) / 2, dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return Math.sqrt((2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db);
+  }
+  function closestIdx(rgb, pal) {
+    let m = Infinity, best = 0;
+    for (let i = 0; i < pal.length; i++) {
+      const d = colDist(rgb, pal[i]);
+      if (d < m) { m = d; best = i; }
+    }
+    return best;
+  }
+
+  function quantize(imgData, w, h, numC) {
+    const d = imgData.data, px = [];
+    for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i + 1], d[i + 2]]);
+
+    const bgColor = imgData.bgColor;
+    const bgMask = bgColor ? buildBackgroundMask(px, w, h, bgColor) : new Array(px.length).fill(false);
+
+    const foreground = [];
+    const fgIndices = [];
+    for (let i = 0; i < px.length; i++) {
+      if (bgMask[i]) continue;
+      foreground.push(px[i]);
+      fgIndices.push(i);
+    }
+
+    if (!foreground.length) {
+      return Array.from({ length: h }, () => Array.from({ length: w }, () => EMPTY));
+    }
+
+    const clusters = clusterPixels(foreground, Math.min(numC, foreground.length));
+    const paletteForCluster = mapClustersToPalette(clusters, allRgb);
+
+    const assigned = new Array(px.length).fill(EMPTY);
+    for (let i = 0; i < foreground.length; i++) {
+      assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+    }
+
+    const g = [];
+    for (let y = 0; y < h; y++) {
+      const row = [];
+      for (let x = 0; x < w; x++) {
+        const index = y * w + x;
+        row.push(assigned[index]);
+      }
+      g.push(row);
+    }
+    return cleanupGrid(g, w, h);
+  }
+
+  function clusterPixels(pixels, k) {
+    const sampled = samplePixelsForClustering(pixels, 4000);
+    const centers = initClusterCenters(sampled, k);
+    const assignments = new Array(pixels.length).fill(0);
+
+    for (let iter = 0; iter < 6; iter++) {
+      const sums = Array.from({ length: centers.length }, () => [0, 0, 0, 0]);
+      let moved = false;
+
+      for (let i = 0; i < pixels.length; i++) {
+        const p = pixels[i];
+        let best = 0;
+        let bestDist = Infinity;
+        for (let c = 0; c < centers.length; c++) {
+          const dist = colDist(p, centers[c]);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = c;
+          }
+        }
+        if (assignments[i] !== best) moved = true;
+        assignments[i] = best;
+        sums[best][0] += p[0];
+        sums[best][1] += p[1];
+        sums[best][2] += p[2];
+        sums[best][3] += 1;
+      }
+
+      for (let c = 0; c < centers.length; c++) {
+        if (!sums[c][3]) continue;
+        centers[c] = [
+          Math.round(sums[c][0] / sums[c][3]),
+          Math.round(sums[c][1] / sums[c][3]),
+          Math.round(sums[c][2] / sums[c][3])
+        ];
+      }
+
+      if (!moved && iter > 1) break;
+    }
+
+    const counts = new Array(centers.length).fill(0);
+    assignments.forEach(idx => counts[idx]++);
+    return { centers, assignments, counts };
+  }
+
+  function samplePixelsForClustering(pixels, maxSamples) {
+    if (pixels.length <= maxSamples) return pixels;
+    const step = pixels.length / maxSamples;
+    const sampled = [];
+    for (let i = 0; i < maxSamples; i++) {
+      sampled.push(pixels[Math.floor(i * step)]);
+    }
+    return sampled;
+  }
+
+  function initClusterCenters(pixels, k) {
+    const centers = [pixels[Math.floor(Math.random() * pixels.length)]];
+    while (centers.length < k) {
+      let bestPixel = pixels[0];
+      let bestScore = -1;
+      for (let i = 0; i < pixels.length; i += Math.max(1, Math.floor(pixels.length / 400))) {
+        const p = pixels[i];
+        let nearest = Infinity;
+        for (const c of centers) nearest = Math.min(nearest, colDist(p, c));
+        if (nearest > bestScore) {
+          bestScore = nearest;
+          bestPixel = p;
+        }
+      }
+      centers.push(bestPixel.slice());
+    }
+    return centers.map(c => c.slice());
+  }
+
+  function mapClustersToPalette(clusters, paletteRgb) {
+    const ranked = clusters.centers.map((center, i) => ({
+      center,
+      i,
+      count: clusters.counts[i]
+    })).sort((a, b) => b.count - a.count);
+
+    const chosen = new Map();
+    for (const item of ranked) {
+      let bestPalette = 0;
+      let bestDist = Infinity;
+      for (let p = 0; p < paletteRgb.length; p++) {
+        const dist = colDist(item.center, paletteRgb[p]);
+        const duplicatePenalty = [...chosen.values()].includes(p) ? 8 : 0;
+        if (dist + duplicatePenalty < bestDist) {
+          bestDist = dist + duplicatePenalty;
+          bestPalette = p;
+        }
+      }
+      chosen.set(item.i, bestPalette);
+    }
+
+    return clusters.centers.map((_, i) => chosen.get(i) ?? 0);
+  }
+
+  function cleanupGrid(gridData, w, h) {
+    let out = gridData.map(row => [...row]);
+    for (let pass = 0; pass < 2; pass++) {
+      const next = out.map(row => [...row]);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const counts = new Map();
+          let same = 0;
+          for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (!ox && !oy) continue;
+              const nx = x + ox, ny = y + oy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const c = out[ny][nx];
+              if (c === EMPTY) continue;
+              counts.set(c, (counts.get(c) || 0) + 1);
+              if (c === out[y][x]) same++;
+            }
+          }
+          let dominant = EMPTY, dominantCount = 0;
+          for (const [color, count] of counts.entries()) {
+            if (count > dominantCount) {
+              dominant = color;
+              dominantCount = count;
+            }
+          }
+
+          if (out[y][x] === EMPTY) {
+            if (dominant !== EMPTY && dominantCount >= 6 && x > 0 && y > 0 && x < w - 1 && y < h - 1) {
+              next[y][x] = dominant;
+            }
+            continue;
+          }
+
+          if (dominant !== EMPTY && dominant !== out[y][x]) {
+            if ((same <= 1 && dominantCount >= 5) || (same <= 2 && dominantCount >= 6)) {
+              next[y][x] = dominant;
+            }
+          }
+        }
+      }
+      out = next;
+    }
+    return out;
+  }
+
+  function buildBackgroundMask(px, w, h, bgColor) {
+    const mask = new Array(px.length).fill(false);
+    const queue = [];
+    const pushIfBg = (x, y) => {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx = y * w + x;
+      if (mask[idx]) return;
+      if (!isBackgroundLike(px, w, h, x, y, bgColor)) return;
+      mask[idx] = true;
+      queue.push(idx);
+    };
+
+    for (let x = 0; x < w; x++) {
+      pushIfBg(x, 0);
+      pushIfBg(x, h - 1);
+    }
+    for (let y = 0; y < h; y++) {
+      pushIfBg(0, y);
+      pushIfBg(w - 1, y);
+    }
+
+    while (queue.length) {
+      const idx = queue.shift();
+      const x = idx % w;
+      const y = Math.floor(idx / w);
+      pushIfBg(x + 1, y);
+      pushIfBg(x - 1, y);
+      pushIfBg(x, y + 1);
+      pushIfBg(x, y - 1);
+    }
+    return mask;
+  }
+
+  function isBackgroundLike(px, w, h, x, y, bgColor) {
+    const rgb = px[y * w + x];
+    const manhattan = Math.abs(rgb[0] - bgColor[0]) + Math.abs(rgb[1] - bgColor[1]) + Math.abs(rgb[2] - bgColor[2]);
+    if (manhattan > 42) return false;
+
+    // 低局部对比才算背景，避免帽子边缘/高光被误挖空
+    let localDiff = 0;
+    let count = 0;
+    for (let oy = -1; oy <= 1; oy++) {
+      for (let ox = -1; ox <= 1; ox++) {
+        if (!ox && !oy) continue;
+        const nx = x + ox, ny = y + oy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const near = px[ny * w + nx];
+        localDiff += Math.abs(rgb[0] - near[0]) + Math.abs(rgb[1] - near[1]) + Math.abs(rgb[2] - near[2]);
+        count++;
+      }
+    }
+    const avgLocal = count ? localDiff / count : 0;
+    return avgLocal < 28;
+  }
+
+  // ================================================================
+  //  Utils
+  // ================================================================
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function tick() { return new Promise(r => requestAnimationFrame(r)); }
+
+  // ================================================================
+  //  Init
+  // ================================================================
+  const DIFF_PRESETS = {
+    easy:   { size: 29, defaultColors: 16, maxColors: 16 },
+    medium: { size: 58, defaultColors: 32, maxColors: 32 },
+    hard:   { size: 116, defaultColors: 48, maxColors: null }
+  };
+
+  window.addEventListener('resize', autoFitPatternView);
+  applyDifficultyDefaults();
+  const initP = fidelityToParams(fidelityValue);
+  fidelityInfo.textContent = initP.size + '×' + initP.size + ' · ' + initP.colors + '色';
+
+})();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>🫧 拼豆图纸生成器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --pink: #FF6B9D;
+    --pink-light: #FFB3D0;
+    --yellow: #FFD93D;
+    --yellow-light: #FFF3B0;
+    --mint: #6BCB77;
+    --mint-light: #B5EAD7;
+    --blue: #4D96FF;
+    --blue-light: #A8D8FF;
+    --purple: #C77DFF;
+    --purple-light: #E0C3FC;
+    --bg: #FFF5F7;
+    --card: #FFFFFF;
+    --text: #5A3E5C;
+    --text-light: #9B7E9E;
+    --shadow: 0 4px 20px rgba(255, 107, 157, 0.15);
+    --radius: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      radial-gradient(circle 6px at 10% 15%, var(--pink-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 85% 10%, var(--yellow) 100%, transparent 100%),
+      radial-gradient(circle 4px at 90% 45%, var(--mint-light) 100%, transparent 100%),
+      radial-gradient(circle 6px at 5% 70%, var(--blue-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 75% 85%, var(--purple-light) 100%, transparent 100%),
+      radial-gradient(circle 4px at 30% 90%, var(--yellow-light) 100%, transparent 100%),
+      radial-gradient(circle 5px at 50% 5%, var(--mint-light) 100%, transparent 100%),
+      radial-gradient(circle 3px at 15% 40%, var(--pink-light) 100%, transparent 100%),
+      radial-gradient(circle 4px at 95% 70%, var(--yellow) 100%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  .container {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header { text-align: center; padding: 24px 0 16px; }
+  .header h1 {
+    font-size: 28px; font-weight: 800;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: 1px;
+  }
+  .header p { color: var(--text-light); font-size: 14px; margin-top: 4px; font-weight: 600; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid rgba(255, 107, 157, 0.1);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; color: var(--pink);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ===== Upload ===== */
+  .upload-zone {
+    border: 3px dashed var(--pink-light); border-radius: 16px;
+    padding: 32px 16px; text-align: center; cursor: pointer;
+    transition: all 0.3s; background: linear-gradient(135deg, #FFF5F7, #FFF0F5);
+    overflow: hidden;
+  }
+  .upload-zone:active { transform: scale(0.97); }
+  .upload-zone.has-image { padding: 8px; }
+  .upload-icon { font-size: 48px; display: block; margin-bottom: 8px; }
+  .upload-text { font-size: 15px; font-weight: 700; color: var(--pink); }
+  .upload-hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+  .upload-zone img { max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: contain; }
+  #fileInput { display: none; }
+
+  /* ===== Settings ===== */
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-label {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .setting-value {
+    font-size: 13px; color: var(--text-light); font-weight: 600;
+    min-width: 36px; text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--pink-light), var(--purple-light));
+    outline: none; margin: 0 8px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: white; border: 3px solid var(--pink);
+    box-shadow: 0 2px 8px rgba(255,107,157,0.3); cursor: pointer;
+  }
+
+  select {
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--text); background: var(--bg);
+    border: 2px solid var(--pink-light); border-radius: 12px;
+    padding: 8px 28px 8px 12px; outline: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23FF6B9D'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+
+  .size-inputs { display: flex; align-items: center; gap: 6px; }
+  .size-input {
+    width: 52px; padding: 7px 4px; text-align: center;
+    border: 2px solid var(--pink-light); border-radius: 10px;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+    color: var(--text); background: var(--bg); outline: none;
+  }
+  .size-input:focus { border-color: var(--pink); }
+  .size-x { font-weight: 700; color: var(--text-light); font-size: 14px; }
+
+  .tab-bar {
+    display: flex; background: var(--bg); border-radius: 14px;
+    padding: 4px; margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 6px; border: none; background: transparent;
+    border-radius: 11px; font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700; color: var(--text-light);
+    cursor: pointer; transition: all 0.25s; text-align: center;
+  }
+  .tab-btn.active {
+    background: white; color: var(--pink);
+    box-shadow: 0 2px 8px rgba(255,107,157,0.15);
+  }
+
+  .diff-tiers { display: flex; gap: 8px; margin-bottom: 14px; }
+  .diff-btn {
+    flex: 1; padding: 10px 6px; border: 2px solid transparent;
+    border-radius: 14px; background: var(--bg); cursor: pointer;
+    text-align: center; transition: all 0.2s; font-family: 'Nunito', sans-serif;
+  }
+  .diff-btn:active { transform: scale(0.95); }
+  .diff-btn.active { border-color: var(--pink); background: #FFF0F5; }
+  .diff-dot { font-size: 22px; display: block; margin-bottom: 2px; }
+  .diff-name { font-size: 13px; font-weight: 800; color: var(--text); }
+  .diff-desc {
+    font-size: 10px; font-weight: 600; color: var(--text-light);
+    line-height: 1.3; margin-top: 3px;
+  }
+  .diff-time {
+    display: inline-block; margin-top: 4px;
+    font-size: 10px; font-weight: 700; border-radius: 8px;
+    padding: 1px 8px;
+  }
+  .diff-btn[data-diff="easy"] .diff-time { background: #E8F5E9; color: #2E7D32; }
+  .diff-btn[data-diff="medium"] .diff-time { background: #FFF8E1; color: #F57F17; }
+  .diff-btn[data-diff="hard"] .diff-time { background: #FFEBEE; color: #C62828; }
+
+  /* ===== Buttons ===== */
+  .btn {
+    width: 100%; padding: 14px; border: none; border-radius: 16px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: white; box-shadow: 0 4px 16px rgba(255,107,157,0.4);
+  }
+  .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+  .btn-secondary {
+    background: linear-gradient(135deg, var(--mint), var(--blue));
+    color: white; box-shadow: 0 4px 16px rgba(107,203,119,0.3);
+  }
+  .btn-outline { background: white; color: var(--pink); border: 2px solid var(--pink-light); }
+  .btn-small {
+    width: auto; padding: 10px 16px; font-size: 13px; border-radius: 12px;
+  }
+
+  /* ===== Progress ===== */
+  .progress-wrap { display: none; margin-top: 12px; }
+  .progress-wrap.show { display: block; }
+  .progress-bar { height: 8px; background: var(--pink-light); border-radius: 4px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--pink), var(--purple));
+    border-radius: 4px; transition: width 0.3s; width: 0%;
+  }
+  .progress-text {
+    font-size: 12px; color: var(--text-light); text-align: center;
+    margin-top: 6px; font-weight: 600;
+  }
+
+  /* ===== Fidelity Slider ===== */
+  .fidelity-section { margin: 14px 0; }
+  .fidelity-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .fidelity-label span:first-child { font-size: 14px; font-weight: 700; color: var(--text); }
+  .fidelity-info {
+    font-size: 11px; font-weight: 600; color: var(--text-light);
+    background: var(--bg); padding: 2px 10px; border-radius: 8px;
+  }
+  .fidelity-slider {
+    width: 100%; height: 10px;
+    background: linear-gradient(90deg, var(--mint-light), var(--yellow), var(--pink));
+  }
+  .fidelity-slider::-webkit-slider-thumb {
+    width: 32px; height: 32px;
+  }
+  .fidelity-hints {
+    display: flex; justify-content: space-between;
+    font-size: 10px; font-weight: 700; color: var(--text-light);
+    margin-top: 4px;
+  }
+
+  /* ===== Result Section ===== */
+  #resultSection { display: none; }
+  #resultSection.show { display: block; animation: slideUp 0.4s ease; }
+
+  /* Pattern table */
+  .pattern-scroll {
+    overflow: hidden;
+    border: 2px solid var(--pink-light); border-radius: 14px;
+    background: white; position: relative;
+    min-height: 260px;
+    max-height: 72vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px;
+  }
+  .pattern-preview {
+    display: block;
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .pattern-stage { display: none; }
+  .pattern-table {
+    border-collapse: collapse;
+    font-size: 7px; font-weight: 700;
+    line-height: 1;
+    font-family: 'Courier New', monospace;
+  }
+  .pattern-table td, .pattern-table th {
+    text-align: center; vertical-align: middle;
+    padding: 0; border: 0.5px solid rgba(0,0,0,0.07);
+  }
+  .pattern-table th {
+    background: #F8F0F2; color: var(--text-light);
+    font-size: 6px; font-weight: 700; position: sticky; z-index: 2;
+    padding: 1px 0; min-width: 18px;
+  }
+  .pattern-table thead th { top: 0; }
+  .pattern-table .row-hdr { position: sticky; left: 0; z-index: 3; background: #F8F0F2; min-width: 16px; }
+  .pattern-table .corner { z-index: 4; background: #F0E8EC; }
+  .pattern-table .bead-cell {
+    min-width: 18px; height: 18px;
+    font-size: 5.5px; letter-spacing: -0.3px;
+    color: rgba(0,0,0,0.7); overflow: hidden;
+    white-space: nowrap;
+  }
+  /* 每5行5列粗线 */
+  .pattern-table .grid5-r { border-top: 0.5px solid rgba(255,107,157,0.12); }
+  .pattern-table .grid5-c { border-left: 0.5px solid rgba(255,107,157,0.12); }
+
+  /* Fullscreen overlay */
+  .fullscreen-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.92);
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .fullscreen-overlay.show { display: flex; }
+  .fullscreen-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); border: none;
+    color: white; font-size: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fullscreen-inner {
+    overflow: auto; -webkit-overflow-scrolling: touch;
+    max-width: 100vw; max-height: 90vh;
+  }
+  .fullscreen-rotate {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px;
+  }
+  .fullscreen-rotate button {
+    padding: 10px 20px; border-radius: 12px;
+    background: rgba(255,255,255,0.15); border: none;
+    color: white; font-size: 14px; font-weight: 700;
+    font-family: 'Nunito', sans-serif; cursor: pointer;
+  }
+  .fullscreen-rotate button:active { background: rgba(255,255,255,0.3); }
+
+  /* ===== Bottom action buttons ===== */
+  .action-bar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .action-bar .btn { flex: 1; min-width: 100px; padding: 11px 8px; font-size: 13px; }
+
+  /* ===== Drawer panel (tools / palette / stats) ===== */
+  .drawer-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.4);
+  }
+  .drawer-overlay.show { display: block; }
+  .drawer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 501; background: white;
+    border-radius: 20px 20px 0 0;
+    max-height: 75vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.3s ease;
+    padding: 20px 16px 32px; -webkit-overflow-scrolling: touch;
+  }
+  .drawer.show { transform: translateY(0); }
+  .drawer-handle {
+    width: 40px; height: 5px; background: #E0D0D6; border-radius: 3px;
+    margin: 0 auto 16px;
+  }
+
+  /* Tool buttons inside drawer */
+  .drawer-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .dtool-btn {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--bg); border: 2px solid transparent;
+    font-size: 24px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .dtool-btn.active { border-color: var(--pink); background: #FFF0F5; }
+  .dtool-btn:active { transform: scale(0.9); }
+  .dtool-label { font-size: 9px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
+
+  /* Palette inside drawer */
+  .palette-grid {
+    display: grid; grid-template-columns: repeat(8, 1fr);
+    gap: 5px; max-height: 200px; overflow-y: auto;
+    padding: 6px; background: var(--bg); border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .palette-swatch {
+    aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s; position: relative;
+  }
+  .palette-swatch:active { transform: scale(0.85); }
+  .palette-swatch.selected {
+    border-color: var(--text);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--pink);
+    transform: scale(1.15); z-index: 2;
+  }
+
+  /* Stats inside drawer */
+  .color-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .color-chip {
+    display: flex; align-items: center; gap: 5px; background: var(--bg);
+    border-radius: 20px; padding: 4px 10px 4px 4px; font-size: 12px; font-weight: 700;
+  }
+  .color-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.1); flex-shrink: 0;
+  }
+
+  .palette-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--yellow-light), var(--yellow));
+    color: var(--text); font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 8px; margin-left: 6px;
+  }
+
+  .hidden { display: none !important; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🫧 拼豆图纸生成器</h1>
+    <p>上传照片或空白画布，设计你的拼豆作品 ✨</p>
+  </div>
+
+  <!-- ==================== 首页 =================== -->
+  <div id="homeSection">
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab-btn active" data-mode="import">📷 导入图片</button>
+        <button class="tab-btn" data-mode="blank">🎨 空白画布</button>
+      </div>
+
+      <div id="importMode">
+        <div class="upload-zone" id="uploadZone">
+          <span class="upload-icon">🖼️</span>
+          <div class="upload-text">点击上传照片</div>
+          <div class="upload-hint">支持从相册选取或拍照</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+
+      </div>
+
+      <div id="blankMode" class="hidden">
+        <div style="text-align:center; padding: 20px 0;">
+          <span style="font-size:48px">🧩</span>
+          <div style="font-size:15px;font-weight:700;color:var(--pink);margin-top:8px">创建空白拼豆板</div>
+          <div style="font-size:12px;color:var(--text-light);margin-top:4px">选好尺寸，直接开始创作！</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ 画布设置</div>
+
+      <div class="setting-row"><span class="setting-label">🎯 难度档位</span></div>
+      <div class="diff-tiers" id="diffTiers">
+        <div class="diff-btn active" data-diff="easy">
+          <span class="diff-dot">🟢</span>
+          <div class="diff-name">简单</div>
+          <div class="diff-desc">大色块<br>≤16色</div>
+          <span class="diff-time">~1小时</span>
+        </div>
+        <div class="diff-btn" data-diff="medium">
+          <span class="diff-dot">🟡</span>
+          <div class="diff-name">中等</div>
+          <div class="diff-desc">少量细节<br>≤32色</div>
+          <span class="diff-time">2-4小时</span>
+        </div>
+        <div class="diff-btn" data-diff="hard">
+          <span class="diff-dot">🔴</span>
+          <div class="diff-name">困难</div>
+          <div class="diff-desc">大量细节<br>渐变色</div>
+          <span class="diff-time">半天+</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">🎨 拼豆色卡</span>
+        <select id="paletteBrand">
+          <option value="artkal5">Artkal S 5mm (199色)</option>
+          <option value="hama">Hama 5mm (92色)</option>
+          <option value="artkalMini">Artkal C 2.6mm (174色)</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">🔲 尺寸</span>
+        <div class="size-inputs">
+          <input type="number" class="size-input" id="gridW" value="29" min="1" max="116">
+          <span class="size-x">×</span>
+          <input type="number" class="size-input" id="gridH" value="29" min="1" max="116">
+        </div>
+      </div>
+
+      <div id="importSettings">
+        <div class="setting-row">
+          <span class="setting-label">🧊 颜色数</span>
+          <div style="display:flex;align-items:center">
+            <input type="range" id="colorCount" min="2" max="199" value="16">
+            <span class="setting-value" id="colorCountValue">16</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px">
+      <button class="btn btn-primary" id="generateBtn" disabled>✨ 生成拼豆图纸</button>
+      <button class="btn btn-secondary hidden" id="createBlankBtn">🎨 创建空白画布</button>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">正在生成中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 结果页 =================== -->
+  <div id="resultSection">
+    <!-- 精细度滑轨 -->
+    <div class="card" id="fidelityCard">
+      <div class="fidelity-section">
+        <div class="fidelity-label">
+          <span>✨ 精细度</span>
+          <span class="fidelity-info" id="fidelityInfo">29×29 · 16色</span>
+        </div>
+        <input type="range" class="fidelity-slider" id="fidelitySlider" min="0" max="100" value="15">
+        <div class="fidelity-hints">
+          <span>简单快速</span>
+          <span>精细复杂</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 图纸 (点击放大) -->
+    <div class="card" style="padding:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="card-title" style="margin-bottom:0">📋 拼豆图纸</div>
+        <span class="palette-tag" id="beadCount"></span>
+      </div>
+      <div class="pattern-scroll" id="patternScroll">
+        <canvas class="pattern-preview" id="patternCanvas"></canvas>
+        <div class="pattern-stage" id="patternStage">
+          <table class="pattern-table" id="patternTable"></table>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <span style="font-size:11px;color:var(--text-light);font-weight:600">👆 滑动查看 · 点击全屏旋转</span>
+      </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="card" style="padding:14px">
+      <div class="action-bar">
+        <button class="btn btn-secondary btn-small" id="saveBtn">💾 保存图片</button>
+        <button class="btn btn-outline btn-small" id="toolsBtn">🛠️ 编辑工具</button>
+        <button class="btn btn-outline btn-small" id="statsBtn">📊 配色清单</button>
+      </div>
+      <div class="action-bar" style="margin-top:8px">
+        <button class="btn btn-outline btn-small" id="backBtn">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 全屏旋转查看 ===== -->
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+  <button class="fullscreen-close" id="fullscreenClose">✕</button>
+  <div class="fullscreen-inner" id="fullscreenInner"></div>
+  <div class="fullscreen-rotate">
+    <button id="rotateBtn">🔄 旋转 90°</button>
+    <button id="fullscreenSaveBtn">💾 保存</button>
+  </div>
+</div>
+
+<!-- ===== 工具抽屉 ===== -->
+<div class="drawer-overlay" id="toolsOverlay"></div>
+<div class="drawer" id="toolsDrawer">
+  <div class="drawer-handle"></div>
+  <div class="card-title">🛠️ 编辑工具</div>
+  <div class="drawer-tools" id="drawerTools">
+    <button class="dtool-btn active" data-tool="pencil">
+      <span>✏️</span><span class="dtool-label">画笔</span>
+    </button>
+    <button class="dtool-btn" data-tool="eraser">
+      <span>🧹</span><span class="dtool-label">橡皮</span>
+    </button>
+    <button class="dtool-btn" data-tool="move">
+      <span>🤚</span><span class="dtool-label">移动</span>
+    </button>
+    <button class="dtool-btn" data-tool="undo">
+      <span>↩️</span><span class="dtool-label">撤销</span>
+    </button>
+  </div>
+  <div style="margin-top:16px">
+    <div class="card-title">🎨 选色</div>
+    <div class="palette-grid" id="paletteGrid"></div>
+  </div>
+</div>
+
+<!-- ===== 配色清单抽屉 ===== -->
+<div class="drawer-overlay" id="statsOverlay"></div>
+<div class="drawer" id="statsDrawer">
+  <div class="drawer-handle"></div>
+  <div class="card-title">📊 配色清单 <span class="palette-tag" id="beadCount2"></span></div>
+  <div class="color-stats" id="colorStats"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ================================================================
+  //  三套拼豆色板 — Artkal S 5mm / Hama Midi 5mm / Artkal C 2.6mm
+  //  数据来源: github.com/maxcleme/beadcolors (社区维护真实色卡)
+  // ================================================================
+
+  const PALETTES = {
+    artkal5: {
+      label: 'Artkal S 5mm (199色)',
+      colors: [
+        {n:'S01 White',h:'#EAEEF3'},{n:'S02 Burning Sand',h:'#EE927C'},{n:'S03 Tangerine',h:'#FFA630'},
+        {n:'S04 Orange',h:'#EB6027'},{n:'S05 Tall Poppy',h:'#CB3531'},{n:'S06 Raspberry Pink',h:'#EF67B2'},
+        {n:'S07 Gray',h:'#959698'},{n:'S08 Emerald',h:'#1FC467'},{n:'S09 Dark Green',h:'#00685E'},
+        {n:'S10 Baby Blue',h:'#2EABD8'},{n:'S11 Dark Blue',h:'#004FA4'},{n:'S12 Pastel Lavender',h:'#9165B2'},
+        {n:'S13 Black',h:'#292A2B'},{n:'S14 Sandstorm',h:'#E1C835'},{n:'S15 Redwood',h:'#9A4541'},
+        {n:'S16 Brown',h:'#65463D'},{n:'S17 Light Brown',h:'#895D49'},{n:'S18 Sand',h:'#DCA384'},
+        {n:'S19 Bubble Gun',h:'#F2BFB8'},{n:'S20 Green',h:'#009053'},{n:'S21 Pastel Green',h:'#8BB23A'},
+        {n:'S22 Purple',h:'#48337E'},{n:'S23 Royal Purple',h:'#644FA4'},{n:'S24 True Blue',h:'#0078BF'},
+        {n:'S25 Hot Pink',h:'#DC519A'},{n:'S26 Magenta',h:'#DA4383'},{n:'S27 Yellow',h:'#EAC125'},
+        {n:'S28 Lily Pink',h:'#DDA1CC'},{n:'S29 Pastel Yellow',h:'#E1D367'},{n:'S30 Shadow Green',h:'#9EC9CD'},
+        {n:'S31 Sea Mist',h:'#B2D7CE'},{n:'S32 Beeswax',h:'#EED39E'},{n:'S33 Maverick',h:'#C0B7D7'},
+        {n:'S34 Red',h:'#B61927'},{n:'S35 Mona Lisa',h:'#E1CCD2'},{n:'S36 Old Pink',h:'#CE6D83'},
+        {n:'S37 Blue-Green',h:'#60BFCB'},{n:'S38 Burgundy',h:'#A3134A'},{n:'S39 Yellow Orange',h:'#E68739'},
+        {n:'S40 Carnation Pink',h:'#E182B0'},{n:'S41 Copper',h:'#9D5B2E'},{n:'S42 Silver',h:'#676B73'},
+        {n:'S43 Dark Gray',h:'#70757B'},{n:'S44 Sky Blue',h:'#A7CDDE'},{n:'S45 Medium Turquoise',h:'#00A5A1'},
+        {n:'S46 Bright Green',h:'#8EC324'},{n:'S47 Marigold',h:'#B27938'},{n:'S48 Corn',h:'#ECC03D'},
+        {n:'S49 Mulberry Wood',h:'#921E5D'},{n:'S50 Mandys Pink',h:'#E2A488'},{n:'S51 Spring Sun',h:'#DFDABD'},
+        {n:'S52 Picasso',h:'#EADE7F'},{n:'S53 Turquoise',h:'#55A4D9'},{n:'S54 Light Blue',h:'#0084CE'},
+        {n:'S55 Pistachio',h:'#97CF87'},{n:'S56 Bright Carrot',h:'#F96F40'},{n:'S57 Buccaneer',h:'#B35540'},
+        {n:'S58 Paprika',h:'#B11836'},{n:'S59 Butterfly Bush',h:'#4F3989'},{n:'S60 Lavender',h:'#8A7EC2'},
+        {n:'S61 Key Lomen Pie',h:'#CDC03F'},{n:'S62 Green Tea',h:'#00765F'},{n:'S63 Metallic Gold',h:'#696046'},
+        {n:'S64 Black Rock',h:'#36384D'},{n:'S65 Canary',h:'#E2E65D'},{n:'S66 Blaze Orange',h:'#E5533C'},
+        {n:'S67 Vanilla',h:'#E9C1A6'},{n:'S68 Tan',h:'#CC9B74'},{n:'S69 Mine Shaft',h:'#383E44'},
+        {n:'S70 Drark Algae',h:'#ADAD29'},{n:'S71 Jade Green',h:'#007D2B'},{n:'S72 Light Sea Blue',h:'#68C4D2'},
+        {n:'S73 Steel Blue',h:'#5AB0BF'},{n:'S74 Azure',h:'#009EC2'},{n:'S75 Dark Steel Blue',h:'#0084B2'},
+        {n:'S76 Sea Blue',h:'#0093A9'},{n:'S77 Ghost While',h:'#D4D8D3'},{n:'S78 Ash Grey',h:'#C2C4C2'},
+        {n:'S79 Light Gray',h:'#A7ACAD'},{n:'S80 Dark Olive',h:'#8F8E3C'},{n:'S81 Deer',h:'#BF9168'},
+        {n:'S82 Clay',h:'#AA744E'},{n:'S83 Sienna',h:'#BB6833'},{n:'S84 Deep Chestnut',h:'#BE5D65'},
+        {n:'S85 Red Wine',h:'#99323A'},{n:'S86 Goldenrod',h:'#E8AE00'},{n:'S87 Coral Red',h:'#EC625E'},
+        {n:'S88 Dark Pink',h:'#D62779'},{n:'S89 Charcoal Gray',h:'#565A5E'},{n:'S90 Pastel Orange',h:'#D9B35E'},
+        {n:'S91 Brunswick Green',h:'#153838'},{n:'S92 Dandelion',h:'#CEA433'},{n:'S93 Pale Skin',h:'#DCB794'},
+        {n:'S94 Warm Blush',h:'#DD9285'},{n:'S95 Salmon',h:'#E07B69'},{n:'S96 Apricot',h:'#EF7F61'},
+        {n:'S97 Papaya',h:'#DC772B'},{n:'S98 Himalaya Blue',h:'#6AAEDB'},{n:'S99 Waterfall',h:'#61BBD3'},
+        {n:'S100 Lagoon',h:'#279BBE'},{n:'S101 Electric Blue',h:'#00A7E3'},{n:'S102 Pool Blue',h:'#0077CA'},
+        {n:'S103 Caribbian Blue',h:'#005AA9'},{n:'S104 Deep Water',h:'#007F9E'},{n:'S105 Petrol Blue',h:'#007D91'},
+        {n:'S106 Wegdewood Blue',h:'#00649A'},{n:'S107 Pond Blue',h:'#006C9F'},{n:'S108 Seashell Beige',h:'#CFC179'},
+        {n:'S109 Beige',h:'#C4AE64'},{n:'S110 Beach Beige',h:'#AB9745'},{n:'S111 Caffe Latté',h:'#978138'},
+        {n:'S112 Oaktree Brown',h:'#907C41'},{n:'S113 Khaki',h:'#B6AE84'},{n:'S114 Light Greengray',h:'#A59F65'},
+        {n:'S115 Mossy Green',h:'#938D54'},{n:'S116 Earth Green',h:'#8D8B51'},{n:'S117 Sage Green',h:'#7F7E49'},
+        {n:'S118 Pinetree Green',h:'#5B6E35'},{n:'S119 Frosty Blue',h:'#8AD5C9'},{n:'S120 Polar Mint',h:'#7CD2A5'},
+        {n:'S121 Celadon Green',h:'#72AC9A'},{n:'S122 Eucalyptus',h:'#00B26F'},{n:'S123 Clover Field',h:'#3EB724'},
+        {n:'S124 Pooltable Felt',h:'#0D7535'},{n:'S125 Snake Green',h:'#007D6E'},{n:'S126 Dark Eucalyptus',h:'#006E69'},
+        {n:'S127 Marsmallow Rose',h:'#DFC3E1'},{n:'S128 Light Grape',h:'#D38ED4'},{n:'S129 Rosebud Pink',h:'#D5A6BA'},
+        {n:'S130 Fuschia',h:'#D6668E'},{n:'S131 Candy Violet',h:'#B8AAD9'},{n:'S132 Flamingo',h:'#DF486D'},
+        {n:'S133 Pink Plum',h:'#BC3CA6'},{n:'S134 Amethyst',h:'#803897'},{n:'S135 Moonlight Blue',h:'#A7BAE1'},
+        {n:'S136 Summer Rain',h:'#AFB8DF'},{n:'S137 Azur Blue',h:'#6B9AD4'},{n:'S138 Cornflower Blue',h:'#5A89CE'},
+        {n:'S139 Forget Me Not',h:'#658AD0'},{n:'S140 Indigo',h:'#566CBD'},{n:'S141 Horizon Blue',h:'#4D74C6'},
+        {n:'S142 Cobolt',h:'#416DBE'},{n:'S143 Royal Blue',h:'#30429E'},{n:'S144 Marine',h:'#024288'},
+        {n:'S145 Pale Yellow Moss',h:'#D6CA6A'},{n:'S146 Bloodrose Red',h:'#9D1A38'},{n:'S147 Spearmint',h:'#80B7A1'},
+        {n:'S148 Mocha',h:'#7A594F'},{n:'S149 Creme',h:'#EFDBA1'},{n:'S150 Iris Violet',h:'#8884D0'},
+        {n:'S151 Forrest Green',h:'#345621'},{n:'S152 Lilac',h:'#AEADDC'},{n:'S153 Pale Lilac',h:'#BCC3E1'},
+        {n:'S154 Sahara Sand',h:'#E3C09A'},{n:'S155 Sunkissed Teint',h:'#C58B60'},{n:'S156 Steel Grey',h:'#5A5F65'},
+        {n:'S157 Iron Grey',h:'#4C5156'},{n:'S158 Pepper',h:'#3A3E42'},{n:'S159 Oslo Gray',h:'#82878B'},
+        {n:'SE1 Moon',h:'#F1F4FA'},{n:'SE2 Raincloud',h:'#A2B2D3'},{n:'SE3 Winter',h:'#83A6DC'},
+        {n:'SE4 Tide',h:'#70D8ED'},{n:'SE5 Aquamarine',h:'#69E3D5'},{n:'SE6 Neptune',h:'#2A63C8'},
+        {n:'SE7 Rose Quartz',h:'#D5AEC9'},{n:'SE8 Mauve',h:'#AF739A'},{n:'SE9 Dark Mauve',h:'#704B6D'},
+        {n:'SE10 Wild Berry',h:'#D977CD'},{n:'SE11 Sugar Plum',h:'#B643AC'},{n:'SE12 Desert',h:'#DEB181'},
+        {n:'SE13 Peanut',h:'#BC9D77'},{n:'SE14 Toffee',h:'#AC7F5D'},{n:'SE15 Bark',h:'#A37E66'},
+        {n:'SG1 Glow Yellow',h:'#C6C0B4'},{n:'SG2 Glow Pink',h:'#DFABBC'},{n:'SG3 Glow Blue',h:'#6FADC1'},
+        {n:'SL1 Glitter Blue',h:'#3687B2'},{n:'SL2 Glitter Green',h:'#117C52'},{n:'SL3 Glitter Red',h:'#C22933'},
+        {n:'SL4 Glitter Yellow',h:'#CDBD00'},{n:'SN1 Neon Orange',h:'#FF7405'},{n:'SN2 Neon Green',h:'#01C63E'},
+        {n:'SN3 Neon Yellow',h:'#F2F33C'},{n:'SN4 Neon Rose',h:'#FF477A'},{n:'SP1 Pearlescent Green',h:'#93CA87'},
+        {n:'SP2 Pearlescent Tangerine',h:'#FE7F54'},{n:'SP3 Pearlescent Orange',h:'#F0A149'},{n:'SP4 Pearlescent Pink',h:'#DC9EA9'},
+        {n:'SP5 Pearlescent Red',h:'#D63C53'},{n:'SP6 Pearlescent Blue',h:'#2C4E97'},{n:'SP7 Pearlescent Purple',h:'#64427E'},
+        {n:'SP8 Pearlescent White',h:'#E0DBCA'},{n:'ST1 Transparent',h:'#C7BCB8'},{n:'ST2 Transparent Pink',h:'#F95498'},
+        {n:'ST3 Transparent Tangering',h:'#FF7C45'},{n:'ST4 Transparent Yellow',h:'#DADF3D'},{n:'ST5 Transparent Green',h:'#0FAE58'},
+        {n:'ST6 Transparent Purple',h:'#8477B3'},
+      ]
+    },
+
+    hama: {
+      label: 'Hama 5mm (92色)',
+      colors: [
+        {n:'H01 White',h:'#E5ECF1'},{n:'H02 Cream',h:'#E4E4C5'},{n:'H03 Yellow',h:'#E9C704'},
+        {n:'H04 Orange',h:'#D14803'},{n:'H05 Red',h:'#B4060E'},{n:'H06 Pink',h:'#EA8AA5'},
+        {n:'H07 Purple',h:'#712297'},{n:'H08 Blue',h:'#0239A3'},{n:'H09 Light Blue',h:'#025BC3'},
+        {n:'H10 Green',h:'#027643'},{n:'H11 Light Green',h:'#19CDA7'},{n:'H12 Brown',h:'#3E271A'},
+        {n:'H13 Transparent Red',h:'#C02435'},{n:'H14 Transparent Yellow',h:'#E4AA32'},{n:'H16 Transparent Green',h:'#37B876'},
+        {n:'H17 Grey',h:'#838F98'},{n:'H18 Black',h:'#141315'},{n:'H19 Clear',h:'#D8D2CE'},
+        {n:'H20 Reddish Brown',h:'#8D2A0F'},{n:'H21 Light Brown',h:'#BE6C21'},{n:'H22 Dark Red',h:'#91020A'},
+        {n:'H24 Translucent Purple',h:'#683E9A'},{n:'H25 Translucent Brown',h:'#87593D'},{n:'H26 Matt Rose',h:'#E8A498'},
+        {n:'H27 Beige',h:'#DCB18E'},{n:'H28 Dark Green',h:'#1E2C1C'},{n:'H29 Claret',h:'#BF0142'},
+        {n:'H30 Burgundy',h:'#4E0C1B'},{n:'H31 Turquoise',h:'#489AB9'},{n:'H32 Neon Fuchsia',h:'#FF208D'},
+        {n:'H33 Cerise',h:'#FF3956'},{n:'H34 Neon Yellow',h:'#E5EF13'},{n:'H35 Neon Red',h:'#FF2833'},
+        {n:'H36 Neon Blue',h:'#2353B0'},{n:'H37 Neon Green',h:'#06B73C'},{n:'H38 Neon Orange',h:'#FD8600'},
+        {n:'H39 Fluorescent Yellow',h:'#F1F21C'},{n:'H40 Fluorescent Orange',h:'#FE630B'},{n:'H41 Fluorescent Blue',h:'#2659B2'},
+        {n:'H42 Fluorescent Green',h:'#0CBD51'},{n:'H43 Pastel Yellow',h:'#E7E45A'},{n:'H44 Pastel Red',h:'#F96160'},
+        {n:'H45 Pastel Purple',h:'#8E69CD'},{n:'H46 Pastel Blue',h:'#51AEE4'},{n:'H47 Pastel Green',h:'#80DF96'},
+        {n:'H48 Pastel Pink',h:'#D67AD1'},{n:'H49 Azure',h:'#0FACD1'},{n:'H60 Teddybear Brown',h:'#F0981E'},
+        {n:'H70 Light Grey',h:'#A5B3C0'},{n:'H71 Dark Grey',h:'#445059'},{n:'H75 Tan',h:'#B78C6D'},
+        {n:'H76 Nougat',h:'#8A5937'},{n:'H77 Cloudy White',h:'#CED1C8'},{n:'H78 Light Peach',h:'#F7C1AA'},
+        {n:'H79 Apricot',h:'#F87633'},{n:'H82 Plum',h:'#91175A'},{n:'H83 Petrol Blue',h:'#037A9F'},
+        {n:'H84 Olive Green',h:'#687836'},{n:'H95 Pastel Rose',h:'#DD9BA3'},{n:'H96 Pastel Lilac',h:'#B491AD'},
+        {n:'H97 Pastel Ice Blue',h:'#8AAFC2'},{n:'H98 Pastel Mint',h:'#94CCA4'},{n:'H15 Transparent Blue',h:'#487ED5'},
+        {n:'H55 Green (Glow in the Dark)',h:'#FAF8ED'},{n:'H56 Red (Glow in the Dark)',h:'#EDBF9F'},{n:'H57 Blue (Glow in the Dark)',h:'#C4D0E3'},
+        {n:'H61 Gold',h:'#D99350'},{n:'H62 Silver',h:'#48474A'},{n:'H63 Bronze',h:'#42312F'},
+        {n:'H64 Pearl',h:'#EFEBE4'},{n:'H72 Translucent Pink',h:'#F097B0'},{n:'H73 Translucent Aqua',h:'#59AEF5'},
+        {n:'H74 Translucent Lilac',h:'#5B55BD'},{n:'H101 Eucalyptus',h:'#A9C39B'},{n:'H102 Forest Green',h:'#356B2D'},
+        {n:'H103 Light Yellow',h:'#FFE660'},{n:'H104 Lime',h:'#BCD122'},{n:'H105 Light Apricot',h:'#FFAC78'},
+        {n:'H106 Light Lavender',h:'#CCC5ED'},{n:'H107 Lavender',h:'#6A87C1'},{n:'H108 Aubergine',h:'#2A2536'},
+        {n:'H109 Cloudy Grey',h:'#8A847F'},{n:'H110 Matcha',h:'#838956'},{n:'H111 Dark Blush',h:'#835854'},
+        {n:'H112 Blush',h:'#AD8A82'},{n:'H113 Aqua',h:'#5F887B'},{n:'H114 Cherry Red',h:'#9A2C31'},
+        {n:'H115 Bright Green',h:'#6E975F'},{n:'H116 Midnight Blue',h:'#222838'},{n:'H117 Taupe Grey',h:'#777169'},
+        {n:'H118 Maroon Red',h:'#612932'},{n:'H119 Sky Blue',h:'#4167B4'},
+      ]
+    },
+
+    artkalMini: {
+      label: 'Artkal C 2.6mm (174色)',
+      colors: [
+        {n:'C01 White',h:'#EAEEF3'},{n:'C02 Black',h:'#292A2B'},{n:'C03 Tangerine',h:'#FFA630'},
+        {n:'C04 Yellow Orange',h:'#E68739'},{n:'C05 Tall Poppy',h:'#CB3531'},{n:'C06 Red',h:'#B61927'},
+        {n:'C07 Carnation Pink',h:'#E182B0'},{n:'C08 Hot Pink',h:'#DC519A'},{n:'C09 Magenta',h:'#DA4383'},
+        {n:'C10 Picasso',h:'#EADE7F'},{n:'C11 Yellow',h:'#EAC125'},{n:'C12 Pistachio',h:'#97CF87'},
+        {n:'C13 Pastel Green',h:'#8BB23A'},{n:'C14 Green',h:'#009053'},{n:'C15 Green Tea',h:'#00765F'},
+        {n:'C16 Bright Carrot',h:'#F96F40'},{n:'C17 Orange',h:'#EB6027'},{n:'C18 Sky Blue',h:'#A7CDDE'},
+        {n:'C19 Baby Blue',h:'#2EABD8'},{n:'C20 Light Blue',h:'#0084CE'},{n:'C21 Dark Blue',h:'#004FA4'},
+        {n:'C22 Bubble Gun',h:'#F2BFB8'},{n:'C23 Sand',h:'#DCA384'},{n:'C24 Beeswax',h:'#EED39E'},
+        {n:'C25 Lavender',h:'#8A7EC2'},{n:'C26 Pastel Lavender',h:'#9165B2'},{n:'C27 Purple',h:'#48337E'},
+        {n:'C28 Marigold',h:'#B27938'},{n:'C29 Buccaneer',h:'#B35540'},{n:'C30 Redwood',h:'#9A4541'},
+        {n:'C31 Light Brown',h:'#895D49'},{n:'C32 Brown',h:'#65463D'},{n:'C33 Gray',h:'#959698'},
+        {n:'C34 Dark Gray',h:'#70757B'},{n:'C35 Silver',h:'#676B73'},{n:'C36 Old Pink',h:'#CE6D83'},
+        {n:'C37 True Blue',h:'#0078BF'},{n:'C38 Turquoise',h:'#55A4D9'},{n:'C39 Shadow Green',h:'#9EC9CD'},
+        {n:'C40 Key Lomen Pie',h:'#CDC03F'},{n:'C41 Pastel Yellow',h:'#E1D367'},{n:'C42 Sandstorm',h:'#E1C835'},
+        {n:'C43 Paprika',h:'#B11836'},{n:'C44 Burning Sand',h:'#EE927C'},{n:'C46 Canary',h:'#E2E65D'},
+        {n:'C47 Vanilla',h:'#E9C1A6'},{n:'C48 Corn',h:'#ECC03D'},{n:'C49 Raspberry Pink',h:'#EF67B2'},
+        {n:'C50 Maverick',h:'#C0B7D7'},{n:'C51 Spring Sun',h:'#DFDABD'},{n:'C52 Butterfly Bush',h:'#4F3989'},
+        {n:'C53 Bright Green',h:'#8EC324'},{n:'C54 Medium Turquoise',h:'#00A5A1'},{n:'C56 Oslo Gray',h:'#82878B'},
+        {n:'C58 Black Rock',h:'#36384D'},{n:'C60 Sea Mist',h:'#B2D7CE'},{n:'C69 Mine Shaft',h:'#383E44'},
+        {n:'C70 Brunswick Green',h:'#153838'},{n:'C71 Goldenrod',h:'#E8AE00'},{n:'C72 Pastel Orange',h:'#D9B35E'},
+        {n:'C73 Sienna',h:'#BB6833'},{n:'C74 Deer',h:'#CDB277'},{n:'C75 Clay',h:'#AA744E'},
+        {n:'C76 Coral Red',h:'#EC625E'},{n:'C77 Deep Chestnut',h:'#BE5D65'},{n:'C78 Red Wine',h:'#99323A'},
+        {n:'C79 Light Sea Blue',h:'#68C4D2'},{n:'C80 Sea Blue',h:'#0093A9'},{n:'C81 Steel Blue',h:'#5AB0BF'},
+        {n:'C82 Azure',h:'#009EC2'},{n:'C83 Dark Steel Blue',h:'#0084B2'},{n:'C84 Drark Algae',h:'#ADAD29'},
+        {n:'C85 Dark Olive',h:'#8F8E3C'},{n:'C86 Jade Green',h:'#007D2B'},{n:'C87 Ghost While',h:'#D4D8D3'},
+        {n:'C88 Ash Grey',h:'#C2C4C2'},{n:'C89 Light Gray',h:'#A7ACAD'},{n:'C90 Charcoal Gray',h:'#565A5E'},
+        {n:'C91 Dandelion',h:'#CEA433'},{n:'C92 Pale Skin',h:'#DCB794'},{n:'C93 Warm Blush',h:'#DD9285'},
+        {n:'C94 Salmon',h:'#E07B69'},{n:'C95 Apricot',h:'#EF7F61'},{n:'C96 Papaya',h:'#DC772B'},
+        {n:'C97 Himalaya Blue',h:'#6AAEDB'},{n:'C98 Waterfall',h:'#61BBD3'},{n:'C99 Lagoon',h:'#279BBE'},
+        {n:'C100 Electric Blue',h:'#00A7E3'},{n:'C101 Pool Blue',h:'#0077CA'},{n:'C102 Caribbian Blue',h:'#005AA9'},
+        {n:'C103 Deep Water',h:'#007F9E'},{n:'C104 Petrol Blue',h:'#007D91'},{n:'C105 Wegdewood Blue',h:'#00649A'},
+        {n:'C106 Pond Blue',h:'#006C9F'},{n:'C107 Seashell Beige',h:'#CFC179'},{n:'C108 Beige',h:'#C4AE64'},
+        {n:'C109 Beach Beige',h:'#AB9745'},{n:'C110 Caffe Latté',h:'#978138'},{n:'C111 Oaktree Brown',h:'#907C41'},
+        {n:'C112 Khaki',h:'#B6AE84'},{n:'C113 Light Greengray',h:'#A59F65'},{n:'C114 Mossy Green',h:'#938D54'},
+        {n:'C115 Earth Green',h:'#8D8B51'},{n:'C116 Sage Green',h:'#7F7E49'},{n:'C117 Pinetree Green',h:'#5B6E35'},
+        {n:'C118 Frosty Blue',h:'#8AD5C9'},{n:'C119 Polar Mint',h:'#7CD2A5'},{n:'C120 Celadon Green',h:'#72AC9A'},
+        {n:'C121 Eucalyptus',h:'#00B26F'},{n:'C122 Clover Field',h:'#3EB724'},{n:'C123 Pooltable Felt',h:'#0D7535'},
+        {n:'C124 Snake Green',h:'#007D6E'},{n:'C125 Dark Eucalyptus',h:'#006E69'},{n:'C126 Marsmallow Rose',h:'#DFC3E1'},
+        {n:'C127 Light Grape',h:'#D38ED4'},{n:'C128 Rosebud Pink',h:'#D5A6BA'},{n:'C129 Fuschia',h:'#D6668E'},
+        {n:'C130 Candy Violet',h:'#B8AAD9'},{n:'C131 Flamingo',h:'#DF486D'},{n:'C132 Pink Plum',h:'#BC3CA6'},
+        {n:'C133 Amethyst',h:'#803897'},{n:'C134 Moonlight Blue',h:'#A7BAE1'},{n:'C135 Summer Rain',h:'#AFB8DF'},
+        {n:'C136 Azur Blue',h:'#6B9AD4'},{n:'C137 Cornflower Blue',h:'#5A89CE'},{n:'C138 Forget Me Not',h:'#658AD0'},
+        {n:'C139 Indigo',h:'#566CBD'},{n:'C140 Horizon Blue',h:'#4D74C6'},{n:'C141 Cobolt',h:'#416DBE'},
+        {n:'C142 Royal Blue',h:'#30429E'},{n:'C143 Marine',h:'#024288'},{n:'C144 Pale Yellow Moss',h:'#D6CA6A'},
+        {n:'C145 Bloodrose Red',h:'#9D1A38'},{n:'C146 Spearmint',h:'#80B7A1'},{n:'C147 Mocha',h:'#7A594F'},
+        {n:'C148 Creme',h:'#EFDBA1'},{n:'C149 Iris Violet',h:'#8884D0'},{n:'C150 Forrest Green',h:'#345621'},
+        {n:'C151 Lilac',h:'#AEADDC'},{n:'C152 Pale Lilac',h:'#BCC3E1'},{n:'C153 Sahara Sand',h:'#E3C09A'},
+        {n:'C154 Sunkissed Teint',h:'#C58B60'},{n:'C155 Steel Grey',h:'#5A5F65'},{n:'C156 Iron Grey',h:'#4C5156'},
+        {n:'C157 Pepper',h:'#3A3E42'},{n:'C45 Spring Green',h:'#5DDB5D'},{n:'C55 Conifer',h:'#6CC24A'},
+        {n:'C57 Fresh Red',h:'#BC0423'},{n:'C59 Scarlett',h:'#531A23'},{n:'C61 Feta',h:'#F1EB9C'},
+        {n:'C62 Carnation',h:'#FC3F3F'},{n:'C63 Pink Pearl',h:'#EABEDB'},{n:'C64 Rose',h:'#A50050'},
+        {n:'C65 Mango',h:'#EF7E2E'},{n:'C66 Wild Watermelon',h:'#FC6C85'},{n:'C67 Orchid',h:'#B14EB5'},
+        {n:'C68 Toothpaste Blue',h:'#69C2EE'},{n:'CE01 Columbia Blue',h:'#C3CED6'},{n:'CE02 Pale Cerulean',h:'#9AB2DB'},
+        {n:'CE03 Silver Lake Blue',h:'#5D88B2'},{n:'CE04 Sky Blue (Crayola)',h:'#02BDD1'},{n:'CE05 Maximum Blue Green',h:'#52CAAC'},
+        {n:'CE06 Bright Navy Blue',h:'#2D6DB2'},{n:'CE07 Black Shadows',h:'#C2A3B7'},{n:'CE08 Mountbatten Pink',h:'#8A5877'},
+        {n:'CE09 Halayà Úbe',h:'#68355D'},{n:'CE10 Deep Mauve',h:'#B84FA8'},{n:'CE11 Heliotrope Magenta',h:'#B02FA4'},
+        {n:'CE12 Rajah',h:'#E2A365'},{n:'CE13 Earth Yellow',h:'#BE8E59'},{n:'CE14 Chinese Bronze',h:'#A87443'},
+        {n:'CE15 Alloy Orange',h:'#A06E52'},{n:'CE16 Orchid Pink',h:'#F9C1D7'},{n:'CE17 Caput Mortuum',h:'#59292B'},
+      ]
+    }
+  };
+
+  // ================================================================
+  //  Fidelity → (size, colors) 映射
+  //  slider 0-100: 先增颜色(0-40), 然后颜色+尺寸一起增(40-100)
+  // ================================================================
+  function fidelityToParams(pct) {
+    const palLen = activePalette.length;
+    const minS = 15, maxS = 116;
+    const minC = 4, maxC = palLen;
+
+    if (pct <= 40) {
+      // 0-40: 尺寸 15→35, 颜色 4→max的40%
+      const t = pct / 40;
+      const s = Math.round(minS + t * 20);
+      const c = Math.round(minC + t * (Math.min(maxC, 40) - minC));
+      return { size: s, colors: clamp(c, minC, maxC) };
+    } else {
+      // 40-100: 尺寸 35→116, 颜色 继续增→palLen
+      const t = (pct - 40) / 60;
+      const s = Math.round(35 + t * (maxS - 35));
+      const c40 = Math.min(maxC, 40);
+      const c = Math.round(c40 + t * (maxC - c40));
+      return { size: clamp(s, minS, maxS), colors: clamp(c, minC, maxC) };
+    }
+  }
+
+  // ================================================================
+  //  State
+  // ================================================================
+  const $ = id => document.getElementById(id);
+  const homeSection   = $('homeSection');
+  const resultSection = $('resultSection');
+  const uploadZone    = $('uploadZone');
+  const fileInput     = $('fileInput');
+  const colorCountEl  = $('colorCount');
+  const colorCountVal = $('colorCountValue');
+  const gridWInput    = $('gridW');
+  const gridHInput    = $('gridH');
+  const paletteBrand  = $('paletteBrand');
+  const generateBtn   = $('generateBtn');
+  const createBlankBtn = $('createBlankBtn');
+  const progressWrap  = $('progressWrap');
+  const progressFill  = $('progressFill');
+  const progressText  = $('progressText');
+  const diffTiers     = $('diffTiers');
+  const fidelitySlider = $('fidelitySlider');
+  const fidelityInfo  = $('fidelityInfo');
+  const fidelityCard  = $('fidelityCard');
+  const patternCanvas = $('patternCanvas');
+  const patternTable  = $('patternTable');
+  const patternScroll = $('patternScroll');
+  const patternStage  = $('patternStage');
+  const saveBtn       = $('saveBtn');
+  const backBtn       = $('backBtn');
+  const toolsBtn      = $('toolsBtn');
+  const statsBtn      = $('statsBtn');
+  const beadCountTag  = $('beadCount');
+  const beadCount2    = $('beadCount2');
+  const colorStatsEl  = $('colorStats');
+  const paletteGrid   = $('paletteGrid');
+  const drawerTools   = $('drawerTools');
+
+  let mode = 'import';
+  let uploadedImage = null;
+  let difficulty = 'easy';
+  let activeBrand = 'artkal5';
+  let activePalette = PALETTES.artkal5.colors;
+  let allRgb = activePalette.map(b => hexToRgb(b.h));
+
+  let grid = null, gW = 29, gH = 29;
+  let usedIndices = []; // global palette indices actually used
+  let currentTool = 'pencil';
+  let selColorIdx = 0;
+  let undoStack = [];
+  const MAX_UNDO = 40;
+  let fidelityValue = 15; // default
+  let fullscreenRotation = 0;
+  let previewLayout = null;
+  const EMPTY = -1;
+
+  // short ref code: extract first token from name (e.g. "S01" from "S01 White")
+  function shortRef(name) {
+    return name.split(' ')[0];
+  }
+
+  function paramsToFidelity(size, colors) {
+    let bestPct = 0;
+    let bestScore = Infinity;
+    for (let pct = 0; pct <= 100; pct++) {
+      const p = fidelityToParams(pct);
+      const score = Math.abs(p.size - size) * 2 + Math.abs(p.colors - colors);
+      if (score < bestScore) {
+        bestScore = score;
+        bestPct = pct;
+      }
+    }
+    return bestPct;
+  }
+
+  // ================================================================
+  //  Home controls
+  // ================================================================
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      $('importMode').classList.toggle('hidden', mode !== 'import');
+      $('blankMode').classList.toggle('hidden', mode !== 'blank');
+      $('importSettings').classList.toggle('hidden', mode !== 'import');
+      generateBtn.classList.toggle('hidden', mode !== 'import');
+      createBlankBtn.classList.toggle('hidden', mode !== 'blank');
+    });
+  });
+
+  diffTiers.addEventListener('click', e => {
+    const b = e.target.closest('.diff-btn');
+    if (!b) return;
+    diffTiers.querySelectorAll('.diff-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    difficulty = b.dataset.diff;
+    applyDifficultyDefaults();
+  });
+
+  function applyDifficultyDefaults() {
+    const preset = DIFF_PRESETS[difficulty];
+    gridWInput.value = preset.size;
+    gridHInput.value = preset.size;
+    syncColorSlider(true);
+  }
+
+  function syncColorSlider(setDefault) {
+    const palLen = activePalette.length;
+    colorCountEl.max = palLen;
+    if (setDefault) {
+      const preset = DIFF_PRESETS[difficulty];
+      const defC = preset.maxColors ? Math.min(preset.defaultColors, palLen) : palLen;
+      colorCountEl.value = defC;
+    } else {
+      colorCountEl.value = Math.min(parseInt(colorCountEl.value || '16', 10), palLen);
+    }
+    colorCountVal.textContent = colorCountEl.value;
+  }
+
+  colorCountEl.addEventListener('input', () => { colorCountVal.textContent = colorCountEl.value; });
+
+  // ================================================================
+  //  Upload
+  // ================================================================
+  uploadZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', handleFile);
+
+  function handleFile() {
+    const f = fileInput.files[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { alert('请选择图片文件哦~'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        uploadedImage = img;
+        uploadZone.innerHTML = '';
+        const preview = document.createElement('img');
+        preview.src = URL.createObjectURL(f);
+        preview.alt = '预览';
+        uploadZone.appendChild(preview);
+        uploadZone.classList.add('has-image');
+        generateBtn.disabled = false;
+      };
+      img.onerror = () => { alert('图片加载失败，请尝试其他图片~'); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  }
+
+  paletteBrand.addEventListener('change', () => {
+    activeBrand = paletteBrand.value;
+    activePalette = PALETTES[activeBrand].colors;
+    allRgb = activePalette.map(b => hexToRgb(b.h));
+    syncColorSlider(false);
+  });
+
+  // ================================================================
+  //  Generate
+  // ================================================================
+  generateBtn.addEventListener('click', doGenerate);
+  createBlankBtn.addEventListener('click', doBlank);
+
+  async function doGenerate() {
+    if (!uploadedImage) return;
+    generateBtn.disabled = true;
+    showProgress(true);
+    setProgress(0, '正在分析图片...');
+    await tick();
+
+    gW = clamp(parseInt(gridWInput.value) || 29, 1, 116);
+    gH = clamp(parseInt(gridHInput.value) || 29, 1, 116);
+    const colors = clamp(parseInt(colorCountEl.value) || 16, 2, activePalette.length);
+    fidelityValue = paramsToFidelity(Math.max(gW, gH), colors);
+    fidelitySlider.value = fidelityValue;
+
+    setProgress(20, '正在缩放图片...');
+    await tick();
+
+    const pd = adjustedPixels(uploadedImage, gW, gH);
+
+    setProgress(50, '正在匹配拼豆色...');
+    await tick();
+
+    grid = quantize(pd, gW, gH, colors);
+    undoStack = [];
+
+    setProgress(80, '正在绘制图纸...');
+    await tick();
+
+    buildPatternTable();
+    updateStats();
+    enterResult(true);
+
+    setProgress(100, '完成！🎉');
+    await delay(300);
+    showProgress(false);
+    generateBtn.disabled = false;
+  }
+
+  function doBlank() {
+    gW = clamp(parseInt(gridWInput.value) || 29, 1, 116);
+    gH = clamp(parseInt(gridHInput.value) || 29, 1, 116);
+    grid = [];
+    for (let y = 0; y < gH; y++) {
+      const row = [];
+      for (let x = 0; x < gW; x++) row.push(0);
+      grid.push(row);
+    }
+    undoStack = [];
+    buildPatternTable();
+    updateStats();
+    enterResult(false);
+  }
+
+  function regenerate() {
+    if (!uploadedImage || mode !== 'import') return;
+    const params = fidelityToParams(fidelityValue);
+    gW = params.size; gH = params.size;
+    const pd = adjustedPixels(uploadedImage, gW, gH);
+    grid = quantize(pd, gW, gH, params.colors);
+    undoStack = [];
+    buildPatternTable();
+    updateStats();
+    fidelityInfo.textContent = gW + '×' + gH + ' · ' + params.colors + '色';
+  }
+
+  // ================================================================
+  //  Fidelity slider
+  // ================================================================
+  fidelitySlider.addEventListener('input', () => {
+    fidelityValue = parseInt(fidelitySlider.value);
+    const p = fidelityToParams(fidelityValue);
+    fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+  });
+
+  let fidelityTimer = null;
+  fidelitySlider.addEventListener('change', () => {
+    fidelityValue = parseInt(fidelitySlider.value);
+    clearTimeout(fidelityTimer);
+    fidelityTimer = setTimeout(regenerate, 150);
+  });
+
+  function showProgress(on) { progressWrap.classList.toggle('show', on); }
+  function setProgress(pct, txt) { progressFill.style.width = pct + '%'; progressText.textContent = txt; }
+
+  // ================================================================
+  //  Enter / Leave result
+  // ================================================================
+  function enterResult(showFidelity) {
+    homeSection.style.display = 'none';
+    resultSection.classList.add('show');
+    fidelityCard.classList.toggle('hidden', !showFidelity);
+    if (showFidelity) {
+      const p = fidelityToParams(fidelityValue);
+      fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+    }
+    requestAnimationFrame(autoFitPatternView);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  backBtn.addEventListener('click', () => {
+    resultSection.classList.remove('show');
+    homeSection.style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ================================================================
+  //  Build pattern table (like reference image)
+  // ================================================================
+  function buildPatternTable() {
+    // Collect used indices
+    const usedSet = new Set();
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++)
+        if (grid[y][x] >= 0) usedSet.add(grid[y][x]);
+    usedIndices = [...usedSet].sort((a, b) => a - b);
+
+    let html = '<thead><tr><th class="corner row-hdr"></th>';
+    for (let x = 1; x <= gW; x++) {
+      const cls = (x % 5 === 1) ? ' grid5-c' : '';
+      html += '<th class="' + cls + '">' + x + '</th>';
+    }
+    html += '</tr></thead><tbody>';
+
+    for (let y = 0; y < gH; y++) {
+      const r5 = ((y + 1) % 5 === 1) ? ' grid5-r' : '';
+      html += '<tr><th class="row-hdr' + r5 + '">' + (y + 1) + '</th>';
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const b = activePalette[ci];
+        const bg = b ? b.h : '#E0D6D9';
+        const ref = b ? shortRef(b.n) : '';
+        // text color: dark bg -> white text
+        const lum = b ? luminance(b.h) : 200;
+        const fg = lum < 100 ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+        const c5 = (x % 5 === 0) ? ' grid5-c' : '';
+        html += '<td class="bead-cell' + r5 + c5 + '" style="background:' + bg + ';color:' + fg + '" data-x="' + x + '" data-y="' + y + '">' + ref + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+
+    // Bottom legend row
+    html += '<tfoot><tr><th class="corner row-hdr"></th>';
+    for (let x = 1; x <= gW; x++) {
+      const cls = (x % 5 === 1) ? ' grid5-c' : '';
+      html += '<th class="' + cls + '">' + x + '</th>';
+    }
+    html += '</tr></tfoot>';
+
+    patternTable.innerHTML = html;
+    requestAnimationFrame(() => {
+      autoFitPatternView();
+      renderPatternPreview();
+    });
+  }
+
+  function autoFitPatternView() {
+    if (!grid) return;
+    const pad = 16;
+    const availW = Math.max(patternScroll.clientWidth - pad, 120);
+    const availH = Math.max(Math.min(window.innerHeight * 0.62, 620) - pad, 180);
+    const header = clamp(Math.floor(Math.min(availW, availH) / 20), 10, 18);
+    const cellW = Math.floor((availW - header * 2) / gW);
+    const cellH = Math.floor((availH - header * 2) / gH);
+    const cell = clamp(Math.min(cellW, cellH), 5, 18);
+    const width = header * 2 + cell * gW;
+    const height = header * 2 + cell * gH;
+    previewLayout = { header, cell, width, height };
+    patternScroll.style.height = (height + 16) + 'px';
+  }
+
+  function renderPatternPreview() {
+    if (!grid || !previewLayout) return;
+    drawPatternToCanvas(patternCanvas, previewLayout, false);
+  }
+
+  function drawPatternToCanvas(canvas, layout, forFullscreen) {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(layout.width * dpr);
+    canvas.height = Math.round(layout.height * dpr);
+    canvas.style.width = layout.width + 'px';
+    canvas.style.height = layout.height + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, layout.width, layout.height);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, layout.width, layout.height);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 ' + Math.max(7, Math.floor(layout.header * 0.45)) + 'px Courier New';
+    ctx.fillStyle = '#9B7E9E';
+    for (let x = 0; x < gW; x++) {
+      const cx = layout.header + x * layout.cell + layout.cell / 2;
+      ctx.fillText(String(x + 1), cx, layout.header / 2);
+      ctx.fillText(String(x + 1), cx, layout.height - layout.header / 2);
+    }
+    for (let y = 0; y < gH; y++) {
+      const cy = layout.header + y * layout.cell + layout.cell / 2;
+      ctx.fillText(String(y + 1), layout.header / 2, cy);
+      ctx.fillText(String(y + 1), layout.width - layout.header / 2, cy);
+    }
+
+    const textSize = Math.max(4, Math.floor(layout.cell * 0.28));
+    ctx.font = '700 ' + textSize + 'px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const bead = ci >= 0 ? activePalette[ci] : null;
+        const px = layout.header + x * layout.cell;
+        const py = layout.header + y * layout.cell;
+        ctx.fillStyle = bead ? bead.h : '#FFFFFF';
+        ctx.fillRect(px, py, layout.cell, layout.cell);
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px, py, layout.cell, layout.cell);
+        if (bead) {
+          ctx.fillStyle = luminance(bead.h) < 100 ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.62)';
+          ctx.fillText(shortRef(bead.n), px + layout.cell / 2, py + layout.cell / 2);
+        }
+      }
+    }
+
+    if (!forFullscreen) {
+      ctx.strokeStyle = 'rgba(255,107,157,0.08)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+        if (i <= gW) {
+          const xp = layout.header + i * layout.cell;
+          ctx.beginPath(); ctx.moveTo(xp, layout.header); ctx.lineTo(xp, layout.height - layout.header); ctx.stroke();
+        }
+        if (i <= gH) {
+          const yp = layout.header + i * layout.cell;
+          ctx.beginPath(); ctx.moveTo(layout.header, yp); ctx.lineTo(layout.width - layout.header, yp); ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function luminance(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+
+  // ================================================================
+  //  Fullscreen view
+  // ================================================================
+  const overlay = $('fullscreenOverlay');
+  const fsInner = $('fullscreenInner');
+
+  patternScroll.addEventListener('click', openFullscreen);
+
+  function openFullscreen() {
+    fullscreenRotation = 0;
+    fsInner.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    const cell = 24;
+    const header = 18;
+    drawPatternToCanvas(canvas, {
+      cell,
+      header,
+      width: header * 2 + cell * gW,
+      height: header * 2 + cell * gH
+    }, true);
+    fsInner.appendChild(canvas);
+    fsInner.style.transform = '';
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  $('fullscreenClose').addEventListener('click', closeFullscreen);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeFullscreen(); });
+
+  function closeFullscreen() {
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  $('rotateBtn').addEventListener('click', () => {
+    fullscreenRotation = (fullscreenRotation + 90) % 360;
+    fsInner.style.transform = 'rotate(' + fullscreenRotation + 'deg)';
+  });
+
+  $('fullscreenSaveBtn').addEventListener('click', () => { doSave(); });
+
+  // ================================================================
+  //  Drawer: Tools
+  // ================================================================
+  const toolsOverlay = $('toolsOverlay');
+  const toolsDrawer = $('toolsDrawer');
+
+  toolsBtn.addEventListener('click', () => {
+    buildPaletteUI();
+    toolsOverlay.classList.add('show');
+    toolsDrawer.classList.add('show');
+  });
+  toolsOverlay.addEventListener('click', closeTools);
+  function closeTools() {
+    toolsOverlay.classList.remove('show');
+    toolsDrawer.classList.remove('show');
+  }
+
+  drawerTools.addEventListener('click', e => {
+    const btn = e.target.closest('.dtool-btn');
+    if (!btn) return;
+    const tool = btn.dataset.tool;
+    if (tool === 'undo') { undo(); return; }
+    currentTool = tool;
+    drawerTools.querySelectorAll('.dtool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  });
+
+  function buildPaletteUI() {
+    paletteGrid.innerHTML = '';
+    // Show only used colors + full palette
+    activePalette.forEach((b, i) => {
+      const el = document.createElement('div');
+      el.className = 'palette-swatch' + (i === selColorIdx ? ' selected' : '');
+      el.style.background = b.h;
+      el.title = b.n;
+      el.dataset.idx = i;
+      el.addEventListener('click', () => {
+        selColorIdx = i;
+        paletteGrid.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+      });
+      paletteGrid.appendChild(el);
+    });
+  }
+
+  // ================================================================
+  //  Canvas interaction on preview
+  // ================================================================
+  let isDrawing = false;
+
+  patternCanvas.addEventListener('pointerdown', e => {
+    if (currentTool === 'move') return;
+    const cell = previewCellAt(e);
+    if (!cell) return;
+    isDrawing = true;
+    applyToolAt(cell.x, cell.y);
+  });
+
+  patternCanvas.addEventListener('pointermove', e => {
+    if (!isDrawing) return;
+    const cell = previewCellAt(e);
+    if (cell) applyToolAt(cell.x, cell.y);
+  });
+
+  document.addEventListener('pointerup', () => { isDrawing = false; });
+
+  function previewCellAt(e) {
+    if (!previewLayout) return null;
+    const rect = patternCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const gx = Math.floor((x - previewLayout.header) / previewLayout.cell);
+    const gy = Math.floor((y - previewLayout.header) / previewLayout.cell);
+    if (gx < 0 || gy < 0 || gx >= gW || gy >= gH) return null;
+    return { x: gx, y: gy };
+  }
+
+  function applyToolAt(x, y) {
+    if (currentTool === 'pencil') {
+      if (grid[y][x] === selColorIdx) return;
+      pushUndo();
+      grid[y][x] = selColorIdx;
+      renderPatternPreview();
+      updateStats();
+    } else if (currentTool === 'eraser') {
+      if (grid[y][x] === EMPTY) return;
+      pushUndo();
+      grid[y][x] = EMPTY;
+      renderPatternPreview();
+      updateStats();
+    }
+  }
+
+  // ================================================================
+  //  Undo
+  // ================================================================
+  function pushUndo() {
+    undoStack.push(grid.map(r => [...r]));
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    grid = undoStack.pop();
+    buildPatternTable();
+    updateStats();
+  }
+
+  // ================================================================
+  //  Drawer: Stats
+  // ================================================================
+  const statsOverlay = $('statsOverlay');
+  const statsDrawer = $('statsDrawer');
+
+  statsBtn.addEventListener('click', () => {
+    updateStats();
+    statsOverlay.classList.add('show');
+    statsDrawer.classList.add('show');
+  });
+  statsOverlay.addEventListener('click', () => {
+    statsOverlay.classList.remove('show');
+    statsDrawer.classList.remove('show');
+  });
+
+  // ================================================================
+  //  Stats
+  // ================================================================
+  function updateStats() {
+    if (!grid) return;
+    const cnt = {};
+    let tot = 0;
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i < 0) continue;
+        cnt[i] = (cnt[i] || 0) + 1;
+        tot++;
+      }
+    beadCountTag.textContent = '共 ' + tot + ' 颗';
+    beadCount2.textContent = '共 ' + tot + ' 颗';
+
+    const sorted = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+    colorStatsEl.innerHTML = sorted.map(([idx, c]) => {
+      const b = activePalette[parseInt(idx)];
+      const name = b ? b.n : '?';
+      const hex = b ? b.h : '#CCC';
+      return '<div class="color-chip"><div class="color-dot" style="background:' + hex + '"></div>' + name + ' × ' + c + '</div>';
+    }).join('');
+  }
+
+  // ================================================================
+  //  Save as image (render to canvas then download)
+  // ================================================================
+  function doSave() {
+    if (!grid) return;
+    const cellSize = 24;
+    const hdrSize = 16;
+    const cw = hdrSize + cellSize * gW + hdrSize;
+    const ch = hdrSize + cellSize * gH + hdrSize;
+
+    const cv = document.createElement('canvas');
+    cv.width = cw; cv.height = ch;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.font = '7px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Column headers
+    for (let x = 0; x < gW; x++) {
+      const cx = hdrSize + x * cellSize + cellSize / 2;
+      ctx.fillStyle = '#9B7E9E';
+      ctx.fillText(String(x + 1), cx, hdrSize / 2);
+      ctx.fillText(String(x + 1), cx, ch - hdrSize / 2);
+    }
+
+    // Row headers
+    for (let y = 0; y < gH; y++) {
+      const cy = hdrSize + y * cellSize + cellSize / 2;
+      ctx.fillStyle = '#9B7E9E';
+      ctx.fillText(String(y + 1), hdrSize / 2, cy);
+      ctx.fillText(String(y + 1), cw - hdrSize / 2, cy);
+    }
+
+    // Cells
+    ctx.font = 'bold 6px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const b = ci >= 0 ? activePalette[ci] : null;
+        const px = hdrSize + x * cellSize;
+        const py = hdrSize + y * cellSize;
+        ctx.fillStyle = b ? b.h : '#E0D6D9';
+        ctx.fillRect(px, py, cellSize, cellSize);
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px, py, cellSize, cellSize);
+
+        // Label
+        if (b) {
+          const lum = luminance(b.h);
+          ctx.fillStyle = lum < 100 ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+          ctx.fillText(shortRef(b.n), px + cellSize / 2, py + cellSize / 2);
+        }
+      }
+    }
+
+    // 5-grid thick lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+      if (i <= gW) {
+        const xp = hdrSize + i * cellSize;
+        ctx.beginPath(); ctx.moveTo(xp, hdrSize); ctx.lineTo(xp, ch - hdrSize); ctx.stroke();
+      }
+      if (i <= gH) {
+        const yp = hdrSize + i * cellSize;
+        ctx.beginPath(); ctx.moveTo(hdrSize, yp); ctx.lineTo(cw - hdrSize, yp); ctx.stroke();
+      }
+    }
+
+    // Legend at bottom
+    const cnt = {};
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+      }
+    // (legend is in the stats drawer, image is the grid itself)
+
+    const a = document.createElement('a');
+    a.download = '拼豆图纸_' + gW + 'x' + gH + '.png';
+    a.href = cv.toDataURL('image/png');
+    a.click();
+  }
+
+  saveBtn.addEventListener('click', doSave);
+
+  // ================================================================
+  //  Image processing
+  // ================================================================
+  function adjustedPixels(img, w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    const src = detectSubjectCrop(img, w / h);
+    ctx.drawImage(img, src.sx, src.sy, src.sw, src.sh, 0, 0, w, h);
+    const id = ctx.getImageData(0, 0, w, h);
+    id.bgColor = src.bgColor || null;
+    return id;
+  }
+
+  function detectSubjectCrop(img, targetRatio) {
+    const sampleMax = 160;
+    const scale = Math.min(1, sampleMax / Math.max(img.width, img.height));
+    const sw = Math.max(24, Math.round(img.width * scale));
+    const sh = Math.max(24, Math.round(img.height * scale));
+    const c = document.createElement('canvas');
+    c.width = sw;
+    c.height = sh;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, sw, sh);
+    const data = ctx.getImageData(0, 0, sw, sh).data;
+
+    const bg = estimateBackground(data, sw, sh);
+    let minX = sw, minY = sh, maxX = -1, maxY = -1;
+    const threshold = 32;
+
+    for (let y = 0; y < sh; y++) {
+      for (let x = 0; x < sw; x++) {
+        const i = (y * sw + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const dist = Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]);
+        if (dist > threshold) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX === -1 || maxY === -1) {
+      const full = fitCrop(0, 0, img.width, img.height, targetRatio);
+      full.bgColor = bg;
+      return full;
+    }
+
+    const boxW = maxX - minX + 1;
+    const boxH = maxY - minY + 1;
+    const cover = (boxW * boxH) / (sw * sh);
+    if (cover < 0.02) {
+      const full = fitCrop(0, 0, img.width, img.height, targetRatio);
+      full.bgColor = bg;
+      return full;
+    }
+
+    const padX = Math.max(2, Math.round(boxW * 0.12));
+    const padY = Math.max(2, Math.round(boxH * 0.12));
+    minX = Math.max(0, minX - padX);
+    minY = Math.max(0, minY - padY);
+    maxX = Math.min(sw - 1, maxX + padX);
+    maxY = Math.min(sh - 1, maxY + padY);
+
+    const cropX = minX / scale;
+    const cropY = minY / scale;
+    const cropW = (maxX - minX + 1) / scale;
+    const cropH = (maxY - minY + 1) / scale;
+    const crop = fitCrop(cropX, cropY, cropW, cropH, targetRatio, img.width, img.height);
+    crop.bgColor = bg;
+    return crop;
+  }
+
+  function estimateBackground(data, w, h) {
+    const samples = [];
+    const edge = Math.max(2, Math.round(Math.min(w, h) * 0.08));
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (x < edge || y < edge || x >= w - edge || y >= h - edge) {
+          const i = (y * w + x) * 4;
+          samples.push([data[i], data[i + 1], data[i + 2]]);
+        }
+      }
+    }
+    if (!samples.length) return [255, 255, 255];
+    samples.sort((a, b) => (a[0] + a[1] + a[2]) - (b[0] + b[1] + b[2]));
+    const mid = samples[Math.floor(samples.length * 0.6)] || samples[Math.floor(samples.length / 2)];
+    return mid;
+  }
+
+  function fitCrop(sx, sy, sw, sh, targetRatio, maxW, maxH) {
+    const boundW = maxW || (sx + sw);
+    const boundH = maxH || (sy + sh);
+    let cropX = sx;
+    let cropY = sy;
+    let cropW = sw;
+    let cropH = sh;
+    const srcRatio = cropW / cropH;
+
+    if (srcRatio > targetRatio) {
+      cropH = cropW / targetRatio;
+      cropY -= (cropH - sh) / 2;
+    } else {
+      cropW = cropH * targetRatio;
+      cropX -= (cropW - sw) / 2;
+    }
+
+    if (cropX < 0) cropX = 0;
+    if (cropY < 0) cropY = 0;
+    if (cropX + cropW > boundW) cropX = boundW - cropW;
+    if (cropY + cropH > boundH) cropY = boundH - cropH;
+
+    cropX = clamp(Math.round(cropX), 0, boundW - 1);
+    cropY = clamp(Math.round(cropY), 0, boundH - 1);
+    cropW = clamp(Math.round(cropW), 1, boundW - cropX);
+    cropH = clamp(Math.round(cropH), 1, boundH - cropY);
+
+    return { sx: cropX, sy: cropY, sw: cropW, sh: cropH };
+  }
+
+  // ================================================================
+  //  Color quantization
+  // ================================================================
+  function hexToRgb(hex) {
+    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+  function colDist(a, b) {
+    const rm = (a[0] + b[0]) / 2, dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return Math.sqrt((2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db);
+  }
+  function closestIdx(rgb, pal) {
+    let m = Infinity, best = 0;
+    for (let i = 0; i < pal.length; i++) {
+      const d = colDist(rgb, pal[i]);
+      if (d < m) { m = d; best = i; }
+    }
+    return best;
+  }
+
+  function quantize(imgData, w, h, numC) {
+    const d = imgData.data, px = [];
+    for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i + 1], d[i + 2]]);
+
+    const bgColor = imgData.bgColor;
+    const bgMask = bgColor ? buildBackgroundMask(px, w, h, bgColor) : new Array(px.length).fill(false);
+
+    const foreground = [];
+    const fgIndices = [];
+    for (let i = 0; i < px.length; i++) {
+      if (bgMask[i]) continue;
+      foreground.push(px[i]);
+      fgIndices.push(i);
+    }
+
+    if (!foreground.length) {
+      return Array.from({ length: h }, () => Array.from({ length: w }, () => EMPTY));
+    }
+
+    const clusters = clusterPixels(foreground, Math.min(numC, foreground.length));
+    const paletteForCluster = mapClustersToPalette(clusters, allRgb);
+
+    const assigned = new Array(px.length).fill(EMPTY);
+    for (let i = 0; i < foreground.length; i++) {
+      assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+    }
+
+    const g = [];
+    for (let y = 0; y < h; y++) {
+      const row = [];
+      for (let x = 0; x < w; x++) {
+        const index = y * w + x;
+        row.push(assigned[index]);
+      }
+      g.push(row);
+    }
+    return cleanupGrid(g, w, h);
+  }
+
+  function clusterPixels(pixels, k) {
+    const sampled = samplePixelsForClustering(pixels, 4000);
+    const centers = initClusterCenters(sampled, k);
+    const assignments = new Array(pixels.length).fill(0);
+
+    for (let iter = 0; iter < 6; iter++) {
+      const sums = Array.from({ length: centers.length }, () => [0, 0, 0, 0]);
+      let moved = false;
+
+      for (let i = 0; i < pixels.length; i++) {
+        const p = pixels[i];
+        let best = 0;
+        let bestDist = Infinity;
+        for (let c = 0; c < centers.length; c++) {
+          const dist = colDist(p, centers[c]);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = c;
+          }
+        }
+        if (assignments[i] !== best) moved = true;
+        assignments[i] = best;
+        sums[best][0] += p[0];
+        sums[best][1] += p[1];
+        sums[best][2] += p[2];
+        sums[best][3] += 1;
+      }
+
+      for (let c = 0; c < centers.length; c++) {
+        if (!sums[c][3]) continue;
+        centers[c] = [
+          Math.round(sums[c][0] / sums[c][3]),
+          Math.round(sums[c][1] / sums[c][3]),
+          Math.round(sums[c][2] / sums[c][3])
+        ];
+      }
+
+      if (!moved && iter > 1) break;
+    }
+
+    const counts = new Array(centers.length).fill(0);
+    assignments.forEach(idx => counts[idx]++);
+    return { centers, assignments, counts };
+  }
+
+  function samplePixelsForClustering(pixels, maxSamples) {
+    if (pixels.length <= maxSamples) return pixels;
+    const step = pixels.length / maxSamples;
+    const sampled = [];
+    for (let i = 0; i < maxSamples; i++) {
+      sampled.push(pixels[Math.floor(i * step)]);
+    }
+    return sampled;
+  }
+
+  function initClusterCenters(pixels, k) {
+    const centers = [pixels[Math.floor(Math.random() * pixels.length)]];
+    while (centers.length < k) {
+      let bestPixel = pixels[0];
+      let bestScore = -1;
+      for (let i = 0; i < pixels.length; i += Math.max(1, Math.floor(pixels.length / 400))) {
+        const p = pixels[i];
+        let nearest = Infinity;
+        for (const c of centers) nearest = Math.min(nearest, colDist(p, c));
+        if (nearest > bestScore) {
+          bestScore = nearest;
+          bestPixel = p;
+        }
+      }
+      centers.push(bestPixel.slice());
+    }
+    return centers.map(c => c.slice());
+  }
+
+  function mapClustersToPalette(clusters, paletteRgb) {
+    const ranked = clusters.centers.map((center, i) => ({
+      center,
+      i,
+      count: clusters.counts[i]
+    })).sort((a, b) => b.count - a.count);
+
+    const chosen = new Map();
+    for (const item of ranked) {
+      let bestPalette = 0;
+      let bestDist = Infinity;
+      for (let p = 0; p < paletteRgb.length; p++) {
+        const dist = colDist(item.center, paletteRgb[p]);
+        const duplicatePenalty = [...chosen.values()].includes(p) ? 8 : 0;
+        if (dist + duplicatePenalty < bestDist) {
+          bestDist = dist + duplicatePenalty;
+          bestPalette = p;
+        }
+      }
+      chosen.set(item.i, bestPalette);
+    }
+
+    return clusters.centers.map((_, i) => chosen.get(i) ?? 0);
+  }
+
+  function cleanupGrid(gridData, w, h) {
+    let out = gridData.map(row => [...row]);
+    for (let pass = 0; pass < 2; pass++) {
+      const next = out.map(row => [...row]);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const counts = new Map();
+          let same = 0;
+          for (let oy = -1; oy <= 1; oy++) {
+            for (let ox = -1; ox <= 1; ox++) {
+              if (!ox && !oy) continue;
+              const nx = x + ox, ny = y + oy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const c = out[ny][nx];
+              if (c === EMPTY) continue;
+              counts.set(c, (counts.get(c) || 0) + 1);
+              if (c === out[y][x]) same++;
+            }
+          }
+          let dominant = EMPTY, dominantCount = 0;
+          for (const [color, count] of counts.entries()) {
+            if (count > dominantCount) {
+              dominant = color;
+              dominantCount = count;
+            }
+          }
+
+          if (out[y][x] === EMPTY) {
+            if (dominant !== EMPTY && dominantCount >= 6 && x > 0 && y > 0 && x < w - 1 && y < h - 1) {
+              next[y][x] = dominant;
+            }
+            continue;
+          }
+
+          if (dominant !== EMPTY && dominant !== out[y][x]) {
+            if ((same <= 1 && dominantCount >= 5) || (same <= 2 && dominantCount >= 6)) {
+              next[y][x] = dominant;
+            }
+          }
+        }
+      }
+      out = next;
+    }
+    return out;
+  }
+
+  function buildBackgroundMask(px, w, h, bgColor) {
+    const mask = new Array(px.length).fill(false);
+    const queue = [];
+    const pushIfBg = (x, y) => {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx = y * w + x;
+      if (mask[idx]) return;
+      if (!isBackgroundLike(px, w, h, x, y, bgColor)) return;
+      mask[idx] = true;
+      queue.push(idx);
+    };
+
+    for (let x = 0; x < w; x++) {
+      pushIfBg(x, 0);
+      pushIfBg(x, h - 1);
+    }
+    for (let y = 0; y < h; y++) {
+      pushIfBg(0, y);
+      pushIfBg(w - 1, y);
+    }
+
+    while (queue.length) {
+      const idx = queue.shift();
+      const x = idx % w;
+      const y = Math.floor(idx / w);
+      pushIfBg(x + 1, y);
+      pushIfBg(x - 1, y);
+      pushIfBg(x, y + 1);
+      pushIfBg(x, y - 1);
+    }
+    return mask;
+  }
+
+  function isBackgroundLike(px, w, h, x, y, bgColor) {
+    const rgb = px[y * w + x];
+    const manhattan = Math.abs(rgb[0] - bgColor[0]) + Math.abs(rgb[1] - bgColor[1]) + Math.abs(rgb[2] - bgColor[2]);
+    if (manhattan > 42) return false;
+
+    // 低局部对比才算背景，避免帽子边缘/高光被误挖空
+    let localDiff = 0;
+    let count = 0;
+    for (let oy = -1; oy <= 1; oy++) {
+      for (let ox = -1; ox <= 1; ox++) {
+        if (!ox && !oy) continue;
+        const nx = x + ox, ny = y + oy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const near = px[ny * w + nx];
+        localDiff += Math.abs(rgb[0] - near[0]) + Math.abs(rgb[1] - near[1]) + Math.abs(rgb[2] - near[2]);
+        count++;
+      }
+    }
+    const avgLocal = count ? localDiff / count : 0;
+    return avgLocal < 28;
+  }
+
+  // ================================================================
+  //  Utils
+  // ================================================================
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function tick() { return new Promise(r => requestAnimationFrame(r)); }
+
+  // ================================================================
+  //  Init
+  // ================================================================
+  const DIFF_PRESETS = {
+    easy:   { size: 29, defaultColors: 16, maxColors: 16 },
+    medium: { size: 58, defaultColors: 32, maxColors: 32 },
+    hard:   { size: 116, defaultColors: 48, maxColors: null }
+  };
+
+  window.addEventListener('resize', autoFitPatternView);
+  applyDifficultyDefaults();
+  const initP = fidelityToParams(fidelityValue);
+  fidelityInfo.textContent = initP.size + '×' + initP.size + ' · ' + initP.colors + '色';
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<mat-toolbar class="main">
+  <div class="spacer">
+    <img src="assets/logo.png" width="60" height="50" class="logo" alt="" />
+
+    <button mat-button [matMenuTriggerFor]="fileMenu">File</button>
+    <mat-menu #fileMenu="matMenu">
+      <button mat-menu-item (click)="newFile()">
+        <mat-icon>note_add</mat-icon>
+        New
+      </button>
+
+      <hr />
+
+      <button mat-menu-item (click)="uploadFile()">
+        <mat-icon>upload_file</mat-icon>
+        Open
+      </button>
+
+      <hr />
+
+      <button mat-menu-item (click)="downloadPng()" [disabled]="!hasImage">
+        <mat-icon>download</mat-icon>
+        Download image
+      </button>
+      <button mat-menu-item (click)="copyImage()" [disabled]="!hasImage">
+        <mat-icon>content_copy</mat-icon>
+        Copy image
+      </button>
+      <button mat-menu-item (click)="copyUrl()" [disabled]="!hasImage">
+        <mat-icon>link</mat-icon>
+        Copy link to image
+      </button>
+    </mat-menu>
+
+    <div class="divider"></div>
+  </div>
+
+  <nav mat-tab-nav-bar *ngIf="state.mode !== Mode.NEW" class="hide-mobile">
+    <a
+      mat-tab-link
+      (click)="state.mode = Mode.PREPROCESS"
+      [active]="state.mode === Mode.PREPROCESS"
+    >
+      <mat-icon>crop</mat-icon> Preprocess
+    </a>
+    <a
+      mat-tab-link
+      (click)="state.mode = Mode.DRAW"
+      [active]="state.mode === Mode.DRAW"
+    >
+      <mat-icon>brush</mat-icon> Draw
+    </a>
+    <a
+      mat-tab-link
+      (click)="state.mode = Mode.ASSEMBLE"
+      [active]="state.mode === Mode.ASSEMBLE"
+    >
+      <mat-icon>grid_on</mat-icon> Assemble
+    </a>
+  </nav>
+
+  <div class="spacer-right">
+    <a
+      mat-button
+      href="https://github.com/google/pixelate"
+      target="_blank"
+      matTooltip="Learn about Pixelate"
+    >
+      <mat-icon>help_outline</mat-icon>
+    </a>
+  </div>
+</mat-toolbar>
+
+<div class="empty-page" *ngIf="state.mode === Mode.NEW">
+  <button mat-flat-button>
+    <img
+      #exampleImage
+      src="assets/logo.png"
+      alt="Edit the pixelated tree frog."
+      width="240"
+      height="200"
+      matTooltip="Click to edit the pixelated tree frog as example."
+      matTooltipPosition="above"
+      (click)="openDrawMode(exampleImage)"
+    />
+  </button>
+
+  <h2>Open, paste, or drop a small pixel art image.</h2>
+</div>
+
+<app-preprocess
+  *ngIf="state.mode === Mode.PREPROCESS"
+  [imageData]="state.imageData"
+  (imageDataOnDestroy)="state.imageData = $event"
+></app-preprocess>
+
+<app-canvas-editor
+  #canvas
+  *ngIf="state.mode === Mode.DRAW"
+  [imageData]="state.imageData"
+  [(state)]="state.canvasEditorState"
+></app-canvas-editor>
+
+<app-instructions
+  *ngIf="state.mode === Mode.ASSEMBLE"
+  [imageData]="state.imageData"
+  [(state)]="state.instructionsState"
+></app-instructions>
