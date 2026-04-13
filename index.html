@@ -2197,13 +2197,66 @@
   // ================================================================
   function adjustedPixels(img, w, h) {
     const c = document.createElement('canvas');
+    const src = detectSubjectCrop(img, w / h);
+
+    // Step-down resize: halve progressively instead of one big jump
+    // This preserves edges & thin features (eyes, outlines) much better
+    let srcCanvas = document.createElement('canvas');
+    srcCanvas.width = src.sw; srcCanvas.height = src.sh;
+    let srcCtx = srcCanvas.getContext('2d');
+    srcCtx.drawImage(img, src.sx, src.sy, src.sw, src.sh, 0, 0, src.sw, src.sh);
+
+    // Sharpen before downscale to preserve edges
+    if (src.sw > w * 3) {
+      sharpenCanvas(srcCtx, srcCanvas.width, srcCanvas.height, 0.3);
+    }
+
+    // Progressive halving (much better than single bilinear jump)
+    let curW = src.sw, curH = src.sh;
+    while (curW > w * 2 || curH > h * 2) {
+      const nw = Math.max(w, Math.ceil(curW / 2));
+      const nh = Math.max(h, Math.ceil(curH / 2));
+      const tmp = document.createElement('canvas');
+      tmp.width = nw; tmp.height = nh;
+      const tctx = tmp.getContext('2d');
+      tctx.drawImage(srcCanvas, 0, 0, curW, curH, 0, 0, nw, nh);
+      srcCanvas = tmp;
+      curW = nw; curH = nh;
+    }
+
+    // Final resize to target
     c.width = w; c.height = h;
     const ctx = c.getContext('2d');
-    const src = detectSubjectCrop(img, w / h);
-    ctx.drawImage(img, src.sx, src.sy, src.sw, src.sh, 0, 0, w, h);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(srcCanvas, 0, 0, curW, curH, 0, 0, w, h);
+
+    // Light sharpen on final small image to crisp up details
+    if (w <= 50) {
+      sharpenCanvas(ctx, w, h, 0.4);
+    }
+
     const id = ctx.getImageData(0, 0, w, h);
     id.bgColor = src.bgColor || null;
     return id;
+  }
+
+  // Simple unsharp-mask sharpening
+  function sharpenCanvas(ctx, w, h, amount) {
+    const src = ctx.getImageData(0, 0, w, h);
+    const d = src.data;
+    const out = new Uint8ClampedArray(d);
+    const a = amount;
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = (y * w + x) * 4;
+        for (let c = 0; c < 3; c++) {
+          const center = d[i + c] * (1 + 4 * a);
+          const neighbors = (d[i - 4 + c] + d[i + 4 + c] + d[i - w * 4 + c] + d[i + w * 4 + c]) * a;
+          out[i + c] = Math.max(0, Math.min(255, Math.round(center - neighbors)));
+        }
+      }
+    }
+    ctx.putImageData(new ImageData(out, w, h), 0, 0);
   }
 
   function detectSubjectCrop(img, targetRatio) {
@@ -2352,12 +2405,39 @@
       return Array.from({ length: h }, () => Array.from({ length: w }, () => EMPTY));
     }
 
-    const clusters = clusterPixels(foreground, Math.min(numC, foreground.length));
-    const paletteForCluster = mapClustersToPalette(clusters, allRgb);
-
-    const assigned = new Array(px.length).fill(EMPTY);
+    // Boost edge/contrast pixels so small but important features (eyes, outlines)
+    // get their own cluster instead of being averaged away
+    const edgeWeights = computeEdgeWeights(px, w, h, bgMask);
+    const weightedFg = [];
     for (let i = 0; i < foreground.length; i++) {
-      assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+      const weight = edgeWeights[fgIndices[i]];
+      weightedFg.push(foreground[i]);
+      // Duplicate high-contrast pixels so they carry more weight in clustering
+      for (let r = 1; r < weight; r++) {
+        weightedFg.push(foreground[i]);
+      }
+    }
+
+    const clusters = clusterPixels(weightedFg.length > foreground.length ? weightedFg : foreground, Math.min(numC, foreground.length));
+
+    // Re-assign original (non-duplicated) foreground pixels
+    const paletteForCluster = mapClustersToPalette(clusters, allRgb);
+    const assigned = new Array(px.length).fill(EMPTY);
+
+    if (weightedFg.length > foreground.length) {
+      // Re-assign by nearest center
+      for (let i = 0; i < foreground.length; i++) {
+        let best = 0, bestDist = Infinity;
+        for (let c = 0; c < clusters.centers.length; c++) {
+          const dist = colDist(foreground[i], clusters.centers[c]);
+          if (dist < bestDist) { bestDist = dist; best = c; }
+        }
+        assigned[fgIndices[i]] = paletteForCluster[best];
+      }
+    } else {
+      for (let i = 0; i < foreground.length; i++) {
+        assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+      }
     }
 
     const g = [];
@@ -2370,6 +2450,35 @@
       g.push(row);
     }
     return cleanupGrid(g, w, h);
+  }
+
+  // Compute edge importance per pixel: high-contrast pixels get weight 2-3x
+  function computeEdgeWeights(px, w, h, bgMask) {
+    const weights = new Array(px.length).fill(1);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        if (bgMask[idx]) continue;
+        const p = px[idx];
+        let maxDiff = 0;
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (!ox && !oy) continue;
+            const nx = x + ox, ny = y + oy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            const nIdx = ny * w + nx;
+            if (bgMask[nIdx]) continue;
+            const n = px[nIdx];
+            const diff = Math.abs(p[0]-n[0]) + Math.abs(p[1]-n[1]) + Math.abs(p[2]-n[2]);
+            if (diff > maxDiff) maxDiff = diff;
+          }
+        }
+        // High contrast with neighbor = important edge pixel
+        if (maxDiff > 120) weights[idx] = 3;
+        else if (maxDiff > 60) weights[idx] = 2;
+      }
+    }
+    return weights;
   }
 
   function clusterPixels(pixels, k) {
@@ -2472,8 +2581,13 @@
   }
 
   function cleanupGrid(gridData, w, h) {
+    const isSmall = w <= 40 || h <= 40;
+    // Skip cleanup entirely for very small grids to preserve detail
+    if (w <= 20 && h <= 20) return gridData;
+
+    const passes = isSmall ? 1 : 2;
     let out = gridData.map(row => [...row]);
-    for (let pass = 0; pass < 2; pass++) {
+    for (let pass = 0; pass < passes; pass++) {
       const next = out.map(row => [...row]);
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
@@ -2506,8 +2620,15 @@
           }
 
           if (dominant !== EMPTY && dominant !== out[y][x]) {
-            if ((same <= 1 && dominantCount >= 5) || (same <= 2 && dominantCount >= 6)) {
-              next[y][x] = dominant;
+            if (isSmall) {
+              // For small grids: only replace truly isolated pixels (no same neighbors at all)
+              if (same === 0 && dominantCount >= 6) {
+                next[y][x] = dominant;
+              }
+            } else {
+              if ((same <= 1 && dominantCount >= 5) || (same <= 2 && dominantCount >= 6)) {
+                next[y][x] = dominant;
+              }
             }
           }
         }
