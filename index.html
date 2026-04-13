@@ -2393,50 +2393,103 @@
     const bgColor = imgData.bgColor;
     const bgMask = bgColor ? buildBackgroundMask(px, w, h, bgColor) : new Array(px.length).fill(false);
 
+    // Phase 1: Detect dark outline pixels (dark pixels next to much lighter ones)
+    const outlineMask = detectOutlinePixels(px, w, h, bgMask);
+
     const foreground = [];
     const fgIndices = [];
+    const outlineIndices = [];
     for (let i = 0; i < px.length; i++) {
       if (bgMask[i]) continue;
-      foreground.push(px[i]);
-      fgIndices.push(i);
+      if (outlineMask[i]) {
+        outlineIndices.push(i);
+      } else {
+        foreground.push(px[i]);
+        fgIndices.push(i);
+      }
     }
 
-    if (!foreground.length) {
+    if (!foreground.length && !outlineIndices.length) {
       return Array.from({ length: h }, () => Array.from({ length: w }, () => EMPTY));
     }
 
-    // Boost edge/contrast pixels so small but important features (eyes, outlines)
-    // get their own cluster instead of being averaged away
-    const edgeWeights = computeEdgeWeights(px, w, h, bgMask);
-    const weightedFg = [];
-    for (let i = 0; i < foreground.length; i++) {
-      const weight = edgeWeights[fgIndices[i]];
-      weightedFg.push(foreground[i]);
-      // Duplicate high-contrast pixels so they carry more weight in clustering
-      for (let r = 1; r < weight; r++) {
-        weightedFg.push(foreground[i]);
-      }
-    }
+    const totalFg = foreground.length + outlineIndices.length;
+    // Only separate outlines if they're a reasonable minority (<30% of foreground)
+    const doOutlineSep = outlineIndices.length > 0 && outlineIndices.length < totalFg * 0.3;
 
-    const clusters = clusterPixels(weightedFg.length > foreground.length ? weightedFg : foreground, Math.min(numC, foreground.length));
-
-    // Re-assign original (non-duplicated) foreground pixels
-    const paletteForCluster = mapClustersToPalette(clusters, allRgb);
     const assigned = new Array(px.length).fill(EMPTY);
 
-    if (weightedFg.length > foreground.length) {
-      // Re-assign by nearest center
-      for (let i = 0; i < foreground.length; i++) {
-        let best = 0, bestDist = Infinity;
-        for (let c = 0; c < clusters.centers.length; c++) {
-          const dist = colDist(foreground[i], clusters.centers[c]);
-          if (dist < bestDist) { bestDist = dist; best = c; }
+    if (doOutlineSep) {
+      // Phase 2a: Assign outline pixels directly to nearest palette color
+      // This bypasses clustering so dark features (eyes, outlines) are never averaged away
+      const outlineColors = new Set();
+      for (const idx of outlineIndices) {
+        const palIdx = closestIdx(px[idx], allRgb);
+        assigned[idx] = palIdx;
+        outlineColors.add(palIdx);
+      }
+
+      // Phase 2b: Cluster remaining fill pixels
+      if (foreground.length > 0) {
+        const numFgColors = Math.max(2, numC - outlineColors.size);
+        const edgeWeights = computeEdgeWeights(px, w, h, bgMask);
+        const weightedFg = [];
+        for (let i = 0; i < foreground.length; i++) {
+          const weight = edgeWeights[fgIndices[i]];
+          weightedFg.push(foreground[i]);
+          for (let r = 1; r < weight; r++) weightedFg.push(foreground[i]);
         }
-        assigned[fgIndices[i]] = paletteForCluster[best];
+        const toCluster = weightedFg.length > foreground.length ? weightedFg : foreground;
+        const clusters = clusterPixels(toCluster, Math.min(numFgColors, foreground.length));
+        const paletteForCluster = mapClustersToPalette(clusters, allRgb);
+        if (weightedFg.length > foreground.length) {
+          for (let i = 0; i < foreground.length; i++) {
+            let best = 0, bestDist = Infinity;
+            for (let c = 0; c < clusters.centers.length; c++) {
+              const dist = colDist(foreground[i], clusters.centers[c]);
+              if (dist < bestDist) { bestDist = dist; best = c; }
+            }
+            assigned[fgIndices[i]] = paletteForCluster[best];
+          }
+        } else {
+          for (let i = 0; i < foreground.length; i++) {
+            assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+          }
+        }
       }
     } else {
-      for (let i = 0; i < foreground.length; i++) {
-        assigned[fgIndices[i]] = paletteForCluster[clusters.assignments[i]];
+      // Fallback: treat all foreground pixels together (edge weighting only)
+      const allFg = [], allFgIdx = [];
+      for (let i = 0; i < px.length; i++) {
+        if (bgMask[i]) continue;
+        allFg.push(px[i]);
+        allFgIdx.push(i);
+      }
+      if (allFg.length) {
+        const edgeWeights = computeEdgeWeights(px, w, h, bgMask);
+        const weightedFg = [];
+        for (let i = 0; i < allFg.length; i++) {
+          const weight = edgeWeights[allFgIdx[i]];
+          weightedFg.push(allFg[i]);
+          for (let r = 1; r < weight; r++) weightedFg.push(allFg[i]);
+        }
+        const toCluster = weightedFg.length > allFg.length ? weightedFg : allFg;
+        const clusters = clusterPixels(toCluster, Math.min(numC, allFg.length));
+        const paletteForCluster = mapClustersToPalette(clusters, allRgb);
+        if (weightedFg.length > allFg.length) {
+          for (let i = 0; i < allFg.length; i++) {
+            let best = 0, bestDist = Infinity;
+            for (let c = 0; c < clusters.centers.length; c++) {
+              const dist = colDist(allFg[i], clusters.centers[c]);
+              if (dist < bestDist) { bestDist = dist; best = c; }
+            }
+            assigned[allFgIdx[i]] = paletteForCluster[best];
+          }
+        } else {
+          for (let i = 0; i < allFg.length; i++) {
+            assigned[allFgIdx[i]] = paletteForCluster[clusters.assignments[i]];
+          }
+        }
       }
     }
 
@@ -2444,12 +2497,40 @@
     for (let y = 0; y < h; y++) {
       const row = [];
       for (let x = 0; x < w; x++) {
-        const index = y * w + x;
-        row.push(assigned[index]);
+        row.push(assigned[y * w + x]);
       }
       g.push(row);
     }
     return cleanupGrid(g, w, h);
+  }
+
+  // Detect dark outline pixels: dark foreground pixels next to much lighter neighbors
+  function detectOutlinePixels(px, w, h, bgMask) {
+    const mask = new Array(px.length).fill(false);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x;
+        if (bgMask[idx]) continue;
+        const p = px[idx];
+        const lum = 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+        if (lum >= 80) continue; // Not dark enough to be outline
+        // Check if any neighbor (including bg) is much lighter
+        let hasLightNeighbor = false;
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (!ox && !oy) continue;
+            const nx = x + ox, ny = y + oy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            const n = px[ny * w + nx];
+            const nLum = 0.299 * n[0] + 0.587 * n[1] + 0.114 * n[2];
+            if (nLum - lum > 70) { hasLightNeighbor = true; break; }
+          }
+          if (hasLightNeighbor) break;
+        }
+        if (hasLightNeighbor) mask[idx] = true;
+      }
+    }
+    return mask;
   }
 
   // Compute edge importance per pixel: high-contrast pixels get weight 2-3x
@@ -2537,7 +2618,15 @@
   }
 
   function initClusterCenters(pixels, k) {
-    const centers = [pixels[Math.floor(Math.random() * pixels.length)]];
+    // Start with the darkest pixel to ensure dark features (outlines, eyes) get a cluster
+    let darkest = pixels[0], darkestLum = Infinity;
+    for (let i = 0; i < pixels.length; i += Math.max(1, Math.floor(pixels.length / 500))) {
+      const p = pixels[i];
+      const lum = 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2];
+      if (lum < darkestLum) { darkestLum = lum; darkest = p; }
+    }
+    const centers = [darkest.slice()];
+    // k-means++ for remaining centers
     while (centers.length < k) {
       let bestPixel = pixels[0];
       let bestScore = -1;
@@ -2591,6 +2680,12 @@
       const next = out.map(row => [...row]);
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
+          // Protect dark (outline) pixels from being smoothed away
+          const curColor = out[y][x];
+          if (curColor !== EMPTY) {
+            const cRgb = allRgb[curColor];
+            if (cRgb && 0.299 * cRgb[0] + 0.587 * cRgb[1] + 0.114 * cRgb[2] < 60) continue;
+          }
           const counts = new Map();
           let same = 0;
           for (let oy = -1; oy <= 1; oy++) {
