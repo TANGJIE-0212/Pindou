@@ -1766,7 +1766,7 @@
       div.addEventListener('click', () => {
         // Load this cartoon image as the current uploadedImage
         const cartoonImg = new Image();
-        cartoonImg.crossOrigin = 'anonymous';
+        if (!item.cartoon.startsWith('data:')) cartoonImg.crossOrigin = 'anonymous';
         cartoonImg.onload = () => {
           uploadedImage = cartoonImg;
           animeBeforeImg.src = item.original;
@@ -1776,8 +1776,6 @@
           // Highlight selected
           historyGrid.querySelectorAll('.history-item').forEach(h => h.classList.remove('selected'));
           div.classList.add('selected');
-          // Auto generate
-          doGenerate();
         };
         cartoonImg.onerror = () => alert('图片加载失败，可能已过期');
         cartoonImg.src = item.cartoon;
