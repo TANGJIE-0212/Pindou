@@ -381,41 +381,39 @@
     padding: 2px 8px; border-radius: 6px; margin-left: 6px;
   }
 
-  /* ===== Fullscreen Editor ===== */
+  /* ===== Fullscreen Editor (redesigned for mobile) ===== */
   .editor-overlay {
     display: none; position: fixed; inset: 0; z-index: 2000;
-    background: #f5f0eb;
-    flex-direction: column;
+    background: #1a1a2e; flex-direction: column;
   }
   .editor-overlay.show { display: flex; }
-  .editor-topbar {
-    position: relative; z-index: 2010;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 10px; background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    flex-shrink: 0;
-  }
+
+  /* Save button — top right */
   .editor-done {
-    position: fixed; top: 12px; right: 12px; z-index: 2020;
-    background: var(--pink); border: none; font-size: 14px; font-weight: 700;
-    cursor: pointer; padding: 8px 20px; border-radius: 20px;
+    position: fixed; top: max(12px, env(safe-area-inset-top)); right: 12px; z-index: 2020;
+    background: var(--pink); border: none; font-size: 13px; font-weight: 700;
+    cursor: pointer; padding: 7px 18px; border-radius: 18px;
     font-family: 'Nunito', sans-serif; color: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
   .editor-done:active { opacity: 0.8; }
-  .editor-topbar-actions {
-    display: flex; gap: 4px; align-items: center;
+
+  /* Undo/redo — top left */
+  .editor-top-actions {
+    position: fixed; top: max(12px, env(safe-area-inset-top)); left: 12px; z-index: 2020;
+    display: flex; gap: 6px;
   }
-  .etop-btn {
-    display: flex; flex-direction: column; align-items: center;
-    background: none; border: none; cursor: pointer;
-    padding: 4px 10px; border-radius: 8px; font-size: 18px;
-    transition: background 0.12s;
+  .eta-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); border: none;
+    color: #fff; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
   }
-  .etop-btn span { font-size: 9px; font-weight: 700; color: var(--text-light); }
-  .etop-btn:active { background: rgba(0,0,0,0.06); }
-  .etop-btn.disabled { opacity: 0.3; pointer-events: none; }
+  .eta-btn:active { background: rgba(255,255,255,0.3); }
+  .eta-btn.disabled { opacity: 0.25; pointer-events: none; }
+
+  /* Canvas area — fills most of screen */
   .editor-canvas-area {
     flex: 1; overflow: hidden; position: relative;
     touch-action: none;
@@ -424,60 +422,100 @@
     position: absolute; top: 0; left: 0;
     transform-origin: 0 0;
   }
-  .editor-toolbar {
+
+  /* Bottom panel */
+  .editor-bottom {
     position: relative; z-index: 2010;
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(0,0,0,0.06);
-    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    background: rgba(30,30,50,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
     flex-shrink: 0;
   }
-  .editor-tool-row {
-    display: flex; align-items: center; gap: 6px;
+
+  /* Tool strip — single row */
+  .editor-tool-strip {
+    display: flex; align-items: center; gap: 4px; margin-bottom: 8px;
   }
-  .editor-tools {
-    display: flex; gap: 4px; flex-shrink: 0;
+  .ets-btn {
+    display: flex; align-items: center; justify-content: center;
+    height: 42px; padding: 0 12px; border-radius: 21px;
+    background: rgba(255,255,255,0.08); border: 2px solid transparent;
+    cursor: pointer; font-size: 16px; gap: 4px; color: #ccc;
+    transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
   }
-  .etool-btn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 50px; height: 48px; border-radius: 10px;
-    background: var(--bg); border: 2px solid transparent;
-    cursor: pointer; transition: all 0.15s;
-    box-shadow: 1px 1px 0 rgba(0,0,0,0.04);
+  .ets-label { font-size: 11px; font-weight: 700; }
+  .ets-btn.active { border-color: var(--pink); background: rgba(233,100,121,0.2); color: #fff; }
+  .ets-btn:active { transform: scale(0.92); }
+
+  /* More tools button */
+  .ets-more {
+    width: 42px; height: 42px; padding: 0; border-radius: 50%;
+    flex-shrink: 0; font-size: 18px;
   }
-  .etool-icon { font-size: 18px; }
-  .etool-label { font-size: 8px; font-weight: 700; color: var(--text-light); margin-top: 1px; }
-  .etool-btn.active { border-color: var(--pink); background: #FFF0F5; }
-  .etool-btn:active { transform: scale(0.92); }
-  /* Recent colors row next to tools */
-  .editor-recent-colors {
-    display: flex; gap: 3px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-    flex: 1; align-items: center; padding: 2px 0;
+
+  /* Current color indicator in tool strip */
+  .ets-color-indicator {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    border: 3px solid rgba(255,255,255,0.5);
+    margin-left: auto; cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
   }
-  .erc-item {
-    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
-    cursor: pointer; width: 40px;
+  .ets-color-indicator:active { transform: scale(0.9); }
+
+  /* Color palette row — swipeable */
+  .editor-palette-row {
+    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    align-items: center; padding: 2px 0;
+    scrollbar-width: none;
   }
-  .erc-swatch {
-    width: 32px; height: 32px; border-radius: 6px;
-    border: 2px solid rgba(0,0,0,0.08);
-    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.08);
+  .editor-palette-row::-webkit-scrollbar { display: none; }
+  .epr-item {
+    flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px;
+    border: 2.5px solid transparent; cursor: pointer;
+    position: relative; transition: all 0.1s;
   }
-  .erc-item.selected .erc-swatch {
-    border-color: var(--pink);
-    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--pink);
+  .epr-item.selected {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--pink);
+    transform: scale(1.08);
   }
-  .erc-code { font-size: 7px; font-weight: 700; color: var(--text-light); margin-top: 1px; white-space: nowrap; }
-  /* Color library panel */
+  .epr-item:active { transform: scale(0.9); }
+  .epr-code {
+    position: absolute; bottom: -1px; left: 0; right: 0;
+    text-align: center; font-size: 6px; font-weight: 800;
+    color: rgba(255,255,255,0.9); text-shadow: 0 0 3px rgba(0,0,0,0.8);
+    line-height: 1;
+  }
+  .epr-add {
+    flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px;
+    background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 20px; color: rgba(255,255,255,0.5);
+  }
+  .epr-add:active { background: rgba(255,255,255,0.2); }
+
+  /* Color library — bottom sheet */
   .editor-colorlib {
-    display: none; max-height: 220px; overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    margin-top: 6px; padding: 6px;
-    background: var(--bg); border-radius: 10px;
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 2030; max-height: 55vh;
+    background: rgba(30,30,50,0.98); backdrop-filter: blur(10px);
+    border-radius: 16px 16px 0 0;
+    padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   .editor-colorlib.show { display: block; }
+  .ecl-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding: 0 4px;
+  }
+  .ecl-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .ecl-close {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    font-size: 22px; cursor: pointer; padding: 4px;
+  }
   .editor-colorlib-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
     gap: 4px;
   }
   .ecl-item {
@@ -486,49 +524,73 @@
     border: 2px solid transparent; transition: all 0.12s;
   }
   .ecl-item:active { transform: scale(0.9); }
-  .ecl-item.selected { border-color: var(--pink); background: #FFF0F5; }
+  .ecl-item.selected { border-color: var(--pink); background: rgba(233,100,121,0.2); }
   .ecl-swatch {
     width: 100%; aspect-ratio: 1; border-radius: 6px;
-    border: 1px solid rgba(0,0,0,0.06);
-    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
   }
-  .ecl-code { font-size: 8px; font-weight: 700; color: var(--text); margin-top: 2px; }
-  /* Cell info toast (select tool) */
+  .ecl-code { font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+  /* Cell info toast */
   .editor-cell-info {
-    display: none; padding: 6px 10px; margin-top: 4px;
-    background: #fff; border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.08);
-    font-size: 12px; font-weight: 700; color: var(--text);
+    display: none; position: fixed; top: max(56px, calc(env(safe-area-inset-top) + 44px));
+    left: 50%; transform: translateX(-50%); z-index: 2025;
+    padding: 8px 16px; background: rgba(0,0,0,0.8);
+    border-radius: 20px; backdrop-filter: blur(8px);
+    font-size: 12px; font-weight: 700; color: #fff;
     align-items: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   }
   .editor-cell-info.show { display: flex; }
   .eci-swatch {
-    width: 24px; height: 24px; border-radius: 6px;
-    border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0;
   }
-  /* Merge panel */
+
+  /* Merge panel — bottom sheet */
   .editor-merge-panel {
-    display: none; margin-top: 6px; padding: 8px;
-    background: #fff; border-radius: 10px;
-    border: 1px solid rgba(0,0,0,0.06);
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 2030; max-height: 50vh;
+    background: rgba(30,30,50,0.98); backdrop-filter: blur(10px);
+    border-radius: 16px 16px 0 0;
+    padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   .editor-merge-panel.show { display: block; }
-  .merge-title { font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; }
+  .merge-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
   .merge-color-list { display: flex; flex-wrap: wrap; gap: 4px; }
   .merge-item {
     display: flex; align-items: center; gap: 4px;
-    padding: 4px 8px; border-radius: 8px;
-    background: var(--bg); cursor: pointer;
+    padding: 6px 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.08); cursor: pointer;
     border: 1.5px solid transparent;
-    font-size: 11px; font-weight: 700; color: var(--text);
+    font-size: 11px; font-weight: 700; color: #ddd;
     transition: all 0.12s;
   }
-  .merge-item:hover { border-color: #e55; }
-  .merge-item:active { transform: scale(0.92); }
+  .merge-item:active { transform: scale(0.92); border-color: #e55; }
   .merge-swatch {
-    width: 16px; height: 16px; border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.1);
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.15);
   }
+
+  /* More tools dropdown */
+  .editor-more-menu {
+    display: none; position: absolute; bottom: 100%; right: 8px;
+    margin-bottom: 6px; z-index: 2015;
+    background: rgba(30,30,50,0.98); backdrop-filter: blur(10px);
+    border-radius: 12px; padding: 6px;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+  }
+  .editor-more-menu.show { display: flex; flex-direction: column; gap: 2px; }
+  .emm-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 8px;
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 700; color: #ddd;
+    white-space: nowrap;
+  }
+  .emm-btn:active { background: rgba(255,255,255,0.1); }
+  .emm-icon { font-size: 18px; }
 
   /* (API key UI removed — key is on server side) */
   .anime-before-after {
@@ -855,53 +917,64 @@
 
 <!-- ===== 全屏编辑器 ===== -->
 <div class="editor-overlay" id="editorOverlay">
+  <!-- Top: undo/redo left, save right -->
+  <div class="editor-top-actions" id="edTopActions">
+    <button class="eta-btn" id="edUndoBtn">↩️</button>
+    <button class="eta-btn" id="edRedoBtn">↪️</button>
+  </div>
   <button class="editor-done" id="editorDone">保存</button>
-  <!-- 画布区 -->
+
+  <!-- Canvas -->
   <div class="editor-canvas-area" id="editorCanvasArea">
     <canvas id="editorCanvas"></canvas>
   </div>
-  <!-- 工具栏 -->
-  <div class="editor-topbar">
-    <div class="editor-topbar-actions">
-      <button class="etop-btn" id="edColorLibBtn">🎨<span>色库</span></button>
-      <button class="etop-btn" id="edUndoBtn">↩️<span>撤销</span></button>
-      <button class="etop-btn" id="edRedoBtn">↪️<span>重做</span></button>
-      <button class="etop-btn" id="edMergeBtn">🔀<span>合并</span></button>
+
+  <!-- Cell info toast (floating) -->
+  <div class="editor-cell-info" id="edCellInfo"></div>
+
+  <!-- Bottom panel -->
+  <div class="editor-bottom">
+    <!-- Tool strip -->
+    <div class="editor-tool-strip" id="editorTools">
+      <button class="ets-btn active" data-tool="move">
+        <span>✋</span><span class="ets-label">移动</span>
+      </button>
+      <button class="ets-btn" data-tool="pencil">
+        <span>✏️</span><span class="ets-label">画笔</span>
+      </button>
+      <button class="ets-btn" data-tool="eraser">
+        <span>🧹</span><span class="ets-label">橡皮</span>
+      </button>
+      <button class="ets-btn" data-tool="bucket">
+        <span>🪣</span><span class="ets-label">填充</span>
+      </button>
+      <button class="ets-btn ets-more" data-tool="_more" id="edMoreBtn">⋯</button>
+      <div class="ets-color-indicator" id="edColorIndicator"></div>
     </div>
+    <!-- Color palette row -->
+    <div class="editor-palette-row" id="edPaletteRow"></div>
   </div>
-  <!-- 工具 + 最近使用颜色 -->
-  <div class="editor-toolbar">
-    <div class="editor-tool-row">
-      <div class="editor-tools" id="editorTools">
-        <button class="etool-btn active" data-tool="pencil">
-          <span class="etool-icon">✏️</span><span class="etool-label">画笔</span>
-        </button>
-        <button class="etool-btn" data-tool="eraser">
-          <span class="etool-icon">🧹</span><span class="etool-label">橡皮擦</span>
-        </button>
-        <button class="etool-btn" data-tool="bigEraser">
-          <span class="etool-icon">🧽</span><span class="etool-label">大橡皮</span>
-        </button>
-        <button class="etool-btn" data-tool="bucket">
-          <span class="etool-icon">🪣</span><span class="etool-label">油漆桶</span>
-        </button>
-        <button class="etool-btn" data-tool="select">
-          <span class="etool-icon">👆</span><span class="etool-label">选择</span>
-        </button>
-      </div>
-      <div class="editor-recent-colors" id="edRecentColors"></div>
+
+  <!-- More tools dropdown -->
+  <div class="editor-more-menu" id="edMoreMenu">
+    <button class="emm-btn" data-tool="bigEraser"><span class="emm-icon">🧽</span>大橡皮（连续删除）</button>
+    <button class="emm-btn" data-tool="select"><span class="emm-icon">👆</span>选取（查看色号）</button>
+    <button class="emm-btn" data-action="merge"><span class="emm-icon">🔀</span>颜色合并</button>
+  </div>
+
+  <!-- Color library bottom sheet -->
+  <div class="editor-colorlib" id="edColorLib">
+    <div class="ecl-header">
+      <span class="ecl-title">🎨 全部色库</span>
+      <button class="ecl-close" id="edColorLibClose">✕</button>
     </div>
-    <!-- 选择工具信息 -->
-    <div class="editor-cell-info" id="edCellInfo"></div>
-    <!-- 颜色合并面板 -->
-    <div class="editor-merge-panel" id="edMergePanel">
-      <div class="merge-title">选择要删除的颜色，将自动替换为最近似色</div>
-      <div class="merge-color-list" id="edMergeList"></div>
-    </div>
-    <!-- 完整色库面板 -->
-    <div class="editor-colorlib" id="edColorLib">
-      <div class="editor-colorlib-grid" id="edColorLibGrid"></div>
-    </div>
+    <div class="editor-colorlib-grid" id="edColorLibGrid"></div>
+  </div>
+
+  <!-- Merge panel bottom sheet -->
+  <div class="editor-merge-panel" id="edMergePanel">
+    <div class="merge-title">点击颜色可删除，自动替换为最近似色</div>
+    <div class="merge-color-list" id="edMergeList"></div>
   </div>
 </div>
 
@@ -2236,11 +2309,13 @@
   const editorArea    = $('editorCanvasArea');
   const editorCanvas  = $('editorCanvas');
   const editorTools   = $('editorTools');
-  const edRecentColors = $('edRecentColors');
+  const edPaletteRow  = $('edPaletteRow');
   const edColorLib    = $('edColorLib');
   const edColorLibGrid = $('edColorLibGrid');
   const edUndoBtn     = $('edUndoBtn');
   const edRedoBtn     = $('edRedoBtn');
+  const edMoreMenu    = $('edMoreMenu');
+  const edColorIndicator = $('edColorIndicator');
 
   // editor zoom/pan state
   let edScale = 1, edMinScale = 0.3, edMaxScale = 12;
@@ -2255,12 +2330,13 @@
 
   function openEditor(skipPush) {
     if (!grid) return;
-    currentTool = 'pencil';
+    currentTool = 'move'; // Default to move to prevent accidental drawing
     editorOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
     edColorLib.classList.remove('show');
     $('edMergePanel').classList.remove('show');
     $('edCellInfo').classList.remove('show');
+    edMoreMenu.classList.remove('show');
     if (!skipPush) history.pushState({ layer: 'editor' }, '');
     // Init recent colors from grid usage
     if (recentColors.length === 0) {
@@ -2270,11 +2346,12 @@
           const i = grid[y][x];
           if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
         }
-      recentColors = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 12).map(e => parseInt(e[0]));
+      recentColors = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 16).map(e => parseInt(e[0]));
     }
-    editorTools.querySelectorAll('.etool-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.tool === 'pencil'));
-    buildRecentColors();
+    editorTools.querySelectorAll('.ets-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tool === 'move'));
+    updateColorIndicator();
+    buildPaletteRow();
     buildColorLibGrid();
     updateUndoRedoBtns();
     renderEditorCanvas();
@@ -2285,46 +2362,70 @@
     editorOverlay.classList.remove('show');
     document.body.style.overflow = '';
     _edPointers.clear();
+    edMoreMenu.classList.remove('show');
     buildPatternTable();
     updateStats();
   }
 
   $('editorDone').addEventListener('click', () => history.back());
 
-  // --- Recent colors row ---
-  function addToRecent(idx) {
-    recentColors = recentColors.filter(i => i !== idx);
-    recentColors.unshift(idx);
-    if (recentColors.length > 12) recentColors.pop();
-    buildRecentColors();
+  // --- Color indicator ---
+  function updateColorIndicator() {
+    const b = activePalette[selColorIdx];
+    edColorIndicator.style.background = b ? b.h : '#ccc';
   }
 
-  function buildRecentColors() {
-    edRecentColors.innerHTML = '';
+  // Color indicator tap → open color lib
+  edColorIndicator.addEventListener('click', () => {
+    edColorLib.classList.toggle('show');
+    edMoreMenu.classList.remove('show');
+    $('edMergePanel').classList.remove('show');
+  });
+
+  // --- Palette row (used colors + scrollable) ---
+  function buildPaletteRow() {
+    edPaletteRow.innerHTML = '';
     recentColors.forEach(ci => {
       const b = activePalette[ci];
       if (!b) return;
       const el = document.createElement('div');
-      el.className = 'erc-item' + (ci === selColorIdx ? ' selected' : '');
-      el.innerHTML = '<div class="erc-swatch" style="background:' + b.h + '"></div>'
-        + '<span class="erc-code">' + shortRef(getDisplayName(b.n)) + '</span>';
+      el.className = 'epr-item' + (ci === selColorIdx ? ' selected' : '');
+      el.style.background = b.h;
+      el.innerHTML = '<span class="epr-code">' + shortRef(getDisplayName(b.n)) + '</span>';
       el.addEventListener('click', () => {
         selColorIdx = ci;
-        currentTool = 'pencil';
-        editorTools.querySelectorAll('.etool-btn').forEach(bt =>
-          bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
-        buildRecentColors();
+        if (currentTool === 'move' || currentTool === 'select' || currentTool === 'eraser' || currentTool === 'bigEraser') {
+          currentTool = 'pencil';
+          editorTools.querySelectorAll('.ets-btn').forEach(bt =>
+            bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
+        }
+        updateColorIndicator();
+        buildPaletteRow();
         highlightColorLib();
       });
-      edRecentColors.appendChild(el);
+      edPaletteRow.appendChild(el);
     });
+    // "+" button to open full color library
+    const addBtn = document.createElement('div');
+    addBtn.className = 'epr-add';
+    addBtn.textContent = '+';
+    addBtn.addEventListener('click', () => {
+      edColorLib.classList.add('show');
+      edMoreMenu.classList.remove('show');
+      $('edMergePanel').classList.remove('show');
+    });
+    edPaletteRow.appendChild(addBtn);
   }
 
-  // --- Color library ---
-  $('edColorLibBtn').addEventListener('click', () => {
-    edColorLib.classList.toggle('show');
-    $('edMergePanel').classList.remove('show');
-  });
+  function addToRecent(idx) {
+    recentColors = recentColors.filter(i => i !== idx);
+    recentColors.unshift(idx);
+    if (recentColors.length > 16) recentColors.pop();
+    buildPaletteRow();
+  }
+
+  // --- Color library (bottom sheet) ---
+  $('edColorLibClose').addEventListener('click', () => edColorLib.classList.remove('show'));
 
   function buildColorLibGrid() {
     edColorLibGrid.innerHTML = '';
@@ -2336,11 +2437,15 @@
         + '<span class="ecl-code">' + shortRef(getDisplayName(b.n)) + '</span>';
       el.addEventListener('click', () => {
         selColorIdx = i;
-        currentTool = 'pencil';
-        editorTools.querySelectorAll('.etool-btn').forEach(bt =>
-          bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
+        if (currentTool === 'move' || currentTool === 'select' || currentTool === 'eraser' || currentTool === 'bigEraser') {
+          currentTool = 'pencil';
+          editorTools.querySelectorAll('.ets-btn').forEach(bt =>
+            bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
+        }
         addToRecent(i);
+        updateColorIndicator();
         highlightColorLib();
+        edColorLib.classList.remove('show');
       });
       edColorLibGrid.appendChild(el);
     });
@@ -2474,6 +2579,10 @@
     return { x: gx, y: gy };
   }
 
+  let _edStartX = 0, _edStartY = 0;
+  let _edMoved = false;
+  const ED_MOVE_THRESHOLD = 8; // pixels before pan starts
+
   editorArea.addEventListener('pointerdown', edOnDown, { passive: false });
   editorArea.addEventListener('pointermove', edOnMove, { passive: false });
   editorArea.addEventListener('pointerup', edOnUp);
@@ -2486,12 +2595,21 @@
     _edPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (_edPointers.size === 1) {
-      // Single finger → draw
-      edIsDrawing = true;
+      _edStartX = e.clientX; _edStartY = e.clientY;
       _edDragX0 = e.clientX; _edDragY0 = e.clientY;
       _edTx0 = edTx; _edTy0 = edTy;
-      const c = edCellAt(e.clientX, e.clientY);
-      if (c) edApplyTool(c.x, c.y);
+      _edMoved = false;
+      edIsDrawing = false;
+
+      if (currentTool === 'move') {
+        // Move tool: immediately start panning
+        _edDragging = true;
+      } else {
+        // Drawing tools: apply tool on tap (will check for movement threshold)
+        edIsDrawing = true;
+        const c = edCellAt(e.clientX, e.clientY);
+        if (c) edApplyTool(c.x, c.y);
+      }
     }
     if (_edPointers.size === 2) {
       // Switch to pinch-zoom regardless of tool
@@ -2530,9 +2648,18 @@
       _edLastDist = dist;
       _edLastMidX = midX;
       _edLastMidY = midY;
-    } else if (_edPointers.size === 1 && edIsDrawing) {
-      // Only pencil and eraser support continuous drag painting
-      if (currentTool === 'pencil' || currentTool === 'eraser') {
+    } else if (_edPointers.size === 1) {
+      const dx = e.clientX - _edStartX;
+      const dy = e.clientY - _edStartY;
+      if (!_edMoved && Math.hypot(dx, dy) > ED_MOVE_THRESHOLD) _edMoved = true;
+
+      if (currentTool === 'move' && _edDragging) {
+        // Pan canvas
+        edTx = _edTx0 + (e.clientX - _edDragX0);
+        edTy = _edTy0 + (e.clientY - _edDragY0);
+        applyEdTransform();
+      } else if (edIsDrawing && (currentTool === 'pencil' || currentTool === 'eraser')) {
+        // Continuous draw/erase
         const c = edCellAt(e.clientX, e.clientY);
         if (c) edApplyTool(c.x, c.y);
       }
@@ -2542,7 +2669,10 @@
   function edOnUp(e) {
     _edPointers.delete(e.pointerId);
     if (_edPointers.size < 2) _edLastDist = 0;
-    if (_edPointers.size === 0) { _edDragging = false; edIsDrawing = false; }
+    if (_edPointers.size === 0) {
+      _edDragging = false;
+      edIsDrawing = false;
+    }
   }
 
   function edOnWheel(e) {
@@ -2631,11 +2761,12 @@
   const edMergePanel = $('edMergePanel');
   const edMergeList  = $('edMergeList');
 
-  $('edMergeBtn').addEventListener('click', () => {
+  function openMergePanel() {
     const showing = edMergePanel.classList.toggle('show');
     edColorLib.classList.remove('show');
+    edMoreMenu.classList.remove('show');
     if (showing) buildMergeList();
-  });
+  }
 
   function buildMergeList() {
     // Count used colors
@@ -2688,12 +2819,44 @@
 
   // --- Editor tool select ---
   editorTools.addEventListener('click', e => {
-    const btn = e.target.closest('.etool-btn');
+    const btn = e.target.closest('.ets-btn');
     if (!btn) return;
-    currentTool = btn.dataset.tool;
-    editorTools.querySelectorAll('.etool-btn').forEach(b =>
+    const tool = btn.dataset.tool;
+    if (tool === '_more') {
+      edMoreMenu.classList.toggle('show');
+      edColorLib.classList.remove('show');
+      edMergePanel.classList.remove('show');
+      return;
+    }
+    currentTool = tool;
+    editorTools.querySelectorAll('.ets-btn').forEach(b =>
       b.classList.toggle('active', b.dataset.tool === currentTool));
+    edMoreMenu.classList.remove('show');
   });
+
+  // More menu actions
+  edMoreMenu.addEventListener('click', e => {
+    const btn = e.target.closest('.emm-btn');
+    if (!btn) return;
+    const tool = btn.dataset.tool;
+    const action = btn.dataset.action;
+    edMoreMenu.classList.remove('show');
+    if (action === 'merge') {
+      openMergePanel();
+      return;
+    }
+    if (tool) {
+      currentTool = tool;
+      // Update tool strip visuals (none of the main buttons will be active)
+      editorTools.querySelectorAll('.ets-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.tool === currentTool));
+    }
+  });
+
+  // Close menus when tapping canvas
+  editorArea.addEventListener('pointerdown', () => {
+    edMoreMenu.classList.remove('show');
+  }, true);
 
   // ================================================================
   //  Undo
