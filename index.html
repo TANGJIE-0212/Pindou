@@ -1620,7 +1620,7 @@
 
       const compressed = await compressImage(animeOriginalFile, 768);
 
-      setAnimeStep('📡 正在上传并动漫化...', '通常需要 3-6 秒');
+      setAnimeStep('📡 正在上传并动漫化...', '');
 
       const resp = await fetch(ANIME_PROXY_URL, {
         method: 'POST',
