@@ -397,14 +397,13 @@
     border-bottom: 1px solid rgba(0,0,0,0.06);
     flex-shrink: 0;
   }
-  .editor-back, .editor-done {
-    background: none; border: none; font-size: 15px; font-weight: 700;
-    cursor: pointer; padding: 6px 10px; border-radius: 8px;
-    font-family: 'Nunito', sans-serif;
+  .editor-done {
+    background: var(--pink); border: none; font-size: 14px; font-weight: 700;
+    cursor: pointer; padding: 6px 16px; border-radius: 18px;
+    font-family: 'Nunito', sans-serif; color: #fff;
+    margin-left: auto;
   }
-  .editor-back { color: #888; }
-  .editor-done { color: var(--pink); }
-  .editor-back:active, .editor-done:active { background: rgba(0,0,0,0.05); }
+  .editor-done:active { opacity: 0.8; }
   .editor-topbar-actions {
     display: flex; gap: 4px; align-items: center;
   }
@@ -834,8 +833,7 @@
     <!-- 底部操作栏 -->
     <div class="card" style="padding:14px">
       <div class="action-bar">
-        <button class="btn btn-outline btn-small" id="toolsBtn">🛠️ 编辑图纸</button>
-        <button class="btn btn-secondary btn-small" id="saveBtn">💾 保存图片</button>
+        <button class="btn btn-secondary btn-small" id="viewBtn" style="flex:1">🔍 查看图纸</button>
       </div>
       <div class="action-bar" style="margin-top:8px">
         <button class="btn btn-outline btn-small" id="backBtn">🏠 返回首页</button>
@@ -850,7 +848,8 @@
   <div class="fs-area" id="fsArea"></div>
   <div class="fs-toolbar">
     <button id="fsFitBtn">适屏</button>
-    <button id="fsSaveBtn">💾 保存</button>
+    <button id="fsEditBtn">🛠️ 编辑图纸</button>
+    <button id="fsSaveBtn">💾 保存图片</button>
   </div>
 </div>
 
@@ -862,7 +861,6 @@
   </div>
   <!-- 顶部栏: 返回 + 标题 + 功能按钮 -->
   <div class="editor-topbar">
-    <button class="editor-back" id="editorBack">✕</button>
     <div class="editor-topbar-actions">
       <button class="etop-btn" id="edColorLibBtn">🎨<span>色库</span></button>
       <button class="etop-btn" id="edUndoBtn">↩️<span>撤销</span></button>
@@ -1295,6 +1293,18 @@
     }
   }
 
+  // Compute w×h preserving uploaded image aspect ratio; longEdge = longer side
+  function aspectDims(longEdge) {
+    if (!uploadedImage) return { w: longEdge, h: longEdge };
+    const iw = uploadedImage.naturalWidth;
+    const ih = uploadedImage.naturalHeight;
+    if (iw >= ih) {
+      return { w: longEdge, h: Math.max(1, Math.round(longEdge * ih / iw)) };
+    } else {
+      return { w: Math.max(1, Math.round(longEdge * iw / ih)), h: longEdge };
+    }
+  }
+
   // ================================================================
   //  State
   // ================================================================
@@ -1324,9 +1334,8 @@
   const patternTable  = $('patternTable');
   const patternScroll = $('patternScroll');
   const patternStage  = $('patternStage');
-  const saveBtn       = $('saveBtn');
+  const viewBtn       = $('viewBtn');
   const backBtn       = $('backBtn');
-  const toolsBtn      = $('toolsBtn');
   const beadCountTag  = $('beadCount');
 
   // Anime mode elements
@@ -1417,8 +1426,9 @@
   function applyDifficultyDefaults() {
     const preset = DIFF_PRESETS[difficulty];
     // 2.6mm 小豆网格数按比例放大 (5/2.6 ≈ 1.9)
-    gridWInput.value = preset.size;
-    gridHInput.value = preset.size;
+    const dd = aspectDims(preset.size);
+    gridWInput.value = dd.w;
+    gridHInput.value = dd.h;
     syncColorSlider(true);
   }
 
@@ -1765,7 +1775,7 @@
   function regenerate() {
     if (!uploadedImage) return;
     const params = fidelityToParams(fidelityValue);
-    gW = params.size; gH = params.size;
+    const dims = aspectDims(params.size); gW = dims.w; gH = dims.h;
     const pd = adjustedPixels(uploadedImage, gW, gH);
     grid = quantize(pd, gW, gH, params.colors);
     undoStack = [];
@@ -1778,7 +1788,8 @@
   // helper: sync the two sub-sliders to given values
   function syncSubSliders(size, colors) {
     fidSizeSlider.value = size;
-    fidSizeVal.textContent = size + '×' + size;
+    const sd = aspectDims(size);
+    fidSizeVal.textContent = sd.w + '×' + sd.h;
     fidColorSlider.max = activePalette.length;
     fidColorSlider.value = colors;
     fidColorVal.textContent = colors + '色';
@@ -1790,7 +1801,8 @@
   fidelitySlider.addEventListener('input', () => {
     fidelityValue = parseInt(fidelitySlider.value);
     const p = fidelityToParams(fidelityValue);
-    fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+    const fd = aspectDims(p.size);
+    fidelityInfo.textContent = fd.w + '×' + fd.h + ' · ' + p.colors + '色';
     syncSubSliders(p.size, p.colors);
   });
 
@@ -1804,9 +1816,10 @@
   // Sub-slider: size
   fidSizeSlider.addEventListener('input', () => {
     const s = parseInt(fidSizeSlider.value);
-    fidSizeVal.textContent = s + '×' + s;
+    const szd = aspectDims(s);
+    fidSizeVal.textContent = szd.w + '×' + szd.h;
     const c = parseInt(fidColorSlider.value);
-    fidelityInfo.textContent = s + '×' + s + ' · ' + c + '色';
+    fidelityInfo.textContent = szd.w + '×' + szd.h + ' · ' + c + '色';
   });
   fidSizeSlider.addEventListener('change', () => {
     clearTimeout(fidelityTimer);
@@ -1820,7 +1833,8 @@
     const c = parseInt(fidColorSlider.value);
     fidColorVal.textContent = c + '色';
     const s = parseInt(fidSizeSlider.value);
-    fidelityInfo.textContent = s + '×' + s + ' · ' + c + '色';
+    const cd = aspectDims(s);
+    fidelityInfo.textContent = cd.w + '×' + cd.h + ' · ' + c + '色';
   });
   fidColorSlider.addEventListener('change', () => {
     clearTimeout(fidelityTimer);
@@ -1832,8 +1846,8 @@
   // Regenerate with explicit size + colors (from sub-sliders)
   function regenerateManual(size, colors) {
     if (!uploadedImage) return;
-    gW = clamp(size, 15, 116);
-    gH = gW;
+    const md = aspectDims(clamp(size, 15, 116));
+    gW = md.w; gH = md.h;
     const c = clamp(colors, 4, activePalette.length);
     const pd = adjustedPixels(uploadedImage, gW, gH);
     grid = quantize(pd, gW, gH, c);
@@ -1841,9 +1855,9 @@
     buildPatternTable();
     updateStats();
     fidelityInfo.textContent = gW + '×' + gH + ' · ' + c + '色';
-    fidelityValue = paramsToFidelity(gW, c);
+    fidelityValue = paramsToFidelity(Math.max(gW, gH), c);
     fidelitySlider.value = fidelityValue;
-    syncSubSliders(gW, c);
+    syncSubSliders(Math.max(gW, gH), c);
   }
 
   function showProgress(on) { progressWrap.classList.toggle('show', on); }
@@ -1858,17 +1872,23 @@
     fidelityCard.classList.toggle('hidden', !showFidelity);
     if (showFidelity) {
       const p = fidelityToParams(fidelityValue);
-      fidelityInfo.textContent = p.size + '×' + p.size + ' · ' + p.colors + '色';
+      const ed = aspectDims(p.size);
+      fidelityInfo.textContent = ed.w + '×' + ed.h + ' · ' + p.colors + '色';
       syncSubSliders(p.size, p.colors);
     }
+    history.pushState({ layer: 'result' }, '');
     requestAnimationFrame(autoFitPatternView);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  backBtn.addEventListener('click', () => {
+  function leaveResult() {
     resultSection.classList.remove('show');
     homeSection.style.display = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  backBtn.addEventListener('click', () => {
+    history.back();
   });
 
   // ================================================================
@@ -2025,6 +2045,7 @@
   let _fsLastDist = 0, _fsLastMidX = 0, _fsLastMidY = 0;
   let _fsDrag = false, _fsDX0 = 0, _fsDY0 = 0, _fsTx0 = 0, _fsTy0 = 0;
 
+  viewBtn.addEventListener('click', openFsView);
   patternScroll.addEventListener('click', openFsView);
 
   function openFsView() {
@@ -2034,6 +2055,7 @@
     fsArea.appendChild(fsCanvas);
     fsOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
+    history.pushState({ layer: 'fullscreen' }, '');
     requestAnimationFrame(fsFit);
   }
 
@@ -2193,12 +2215,18 @@
     fsScale = ns; fsApply();
   }
 
-  $('fsClose').addEventListener('click', closeFsView);
+  $('fsClose').addEventListener('click', () => history.back());
   function closeFsView() {
     fsOverlay.classList.remove('show'); document.body.style.overflow = '';
     _fsPtrs.clear(); fsCanvas = null;
   }
   $('fsFitBtn').addEventListener('click', fsFit);
+  $('fsEditBtn').addEventListener('click', () => {
+    closeFsView();
+    // replace fullscreen state with editor state (no extra back entry)
+    history.replaceState({ layer: 'editor' }, '');
+    openEditor(true);
+  });
   $('fsSaveBtn').addEventListener('click', () => doSave());
 
   // ================================================================
@@ -2225,9 +2253,7 @@
   let recentColors = []; // recently used color indices (max 12)
   let redoStack = [];
 
-  toolsBtn.addEventListener('click', openEditor);
-
-  function openEditor() {
+  function openEditor(skipPush) {
     if (!grid) return;
     currentTool = 'pencil';
     editorOverlay.classList.add('show');
@@ -2235,6 +2261,7 @@
     edColorLib.classList.remove('show');
     $('edMergePanel').classList.remove('show');
     $('edCellInfo').classList.remove('show');
+    if (!skipPush) history.pushState({ layer: 'editor' }, '');
     // Init recent colors from grid usage
     if (recentColors.length === 0) {
       const cnt = {};
@@ -2262,8 +2289,7 @@
     updateStats();
   }
 
-  $('editorBack').addEventListener('click', closeEditor);
-  $('editorDone').addEventListener('click', closeEditor);
+  $('editorDone').addEventListener('click', () => history.back());
 
   // --- Recent colors row ---
   function addToRecent(idx) {
@@ -2417,6 +2443,8 @@
     ctx.strokeStyle = '#8B7B8E';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(edHeader, edHeader, gW * edCell, gH * edCell);
+    // Re-apply zoom/pan transform (canvas resize clears it)
+    applyEdTransform();
   }
 
   function applyEdTransform() {
@@ -2830,7 +2858,7 @@
     a.click();
   }
 
-  saveBtn.addEventListener('click', doSave);
+  // saveBtn removed – save is now inside fullscreen view
 
   // ================================================================
   //  Algorithm dispatcher (实际代码在 algo-shared/ours/competitor.js)
@@ -2861,9 +2889,37 @@
   };
 
   window.addEventListener('resize', autoFitPatternView);
+
+  // ================================================================
+  //  History-based back navigation
+  // ================================================================
+  window.addEventListener('popstate', (e) => {
+    const layer = e.state && e.state.layer;
+    // Close topmost open layer
+    if (editorOverlay.classList.contains('show')) {
+      closeEditor();
+      // If we came from fullscreen → editor, re-open fullscreen
+      if (layer === 'fullscreen') {
+        fsOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(fsFit);
+      }
+      return;
+    }
+    if (fsOverlay.classList.contains('show')) {
+      closeFsView();
+      return;
+    }
+    if (resultSection.classList.contains('show')) {
+      leaveResult();
+      return;
+    }
+  });
+
   applyDifficultyDefaults();
   const initP = fidelityToParams(fidelityValue);
-  fidelityInfo.textContent = initP.size + '×' + initP.size + ' · ' + initP.colors + '色';
+  const initD = aspectDims(initP.size);
+  fidelityInfo.textContent = initD.w + '×' + initD.h + ' · ' + initP.colors + '色';
   syncSubSliders(initP.size, initP.colors);
 
 })();
