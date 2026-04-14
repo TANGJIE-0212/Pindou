@@ -3018,8 +3018,25 @@
       ctx.fillText(' ×' + cnt[ci], lx + swatchW + 4 + codeW, ly + 1 + swatchH / 2);
     }
 
+    const fileName = '拼豆图纸_' + gW + 'x' + gH + '.png';
+
+    // Try Web Share API (mobile: save to photos via share sheet)
+    if (navigator.canShare) {
+      try {
+        const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+          return;
+        }
+      } catch (e) {
+        if (e.name === 'AbortError') return; // user cancelled
+      }
+    }
+
+    // Fallback: traditional download
     const a = document.createElement('a');
-    a.download = '拼豆图纸_' + gW + 'x' + gH + '.png';
+    a.download = fileName;
     a.href = cv.toDataURL('image/png');
     a.click();
   }
