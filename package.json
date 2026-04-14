@@ -1,0 +1,27 @@
+{
+  "name": "pindou",
+  "version": "1.0.0",
+  "description": "",
+  "main": "algo-competitor.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TANGJIE-0212/Pindou.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/TANGJIE-0212/Pindou/issues"
+  },
+  "homepage": "https://github.com/TANGJIE-0212/Pindou#readme",
+  "devDependencies": {
+    "puppeteer": "^24.40.0"
+  }
+}

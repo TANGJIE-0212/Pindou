@@ -1426,8 +1426,10 @@
 
   let mode = 'direct';
   let uploadedImage = null;
-  let animeOriginalFile = null; // base64 of original photo for anime mode
-  let animeOriginalBlob = null; // blob URL for preview
+  let directImage = null;        // direct mode's uploaded image (preserved across tab switches)
+  let animeImage = null;         // anime mode's converted cartoon image
+  let animeOriginalFile = null;  // base64 of original photo for anime mode
+  let animeOriginalBlob = null;  // blob URL for preview
   let difficulty = 'medium';
   let activeBrand = 'mard';
   let displayBrand = 'mard';
@@ -1478,11 +1480,13 @@
       $('directMode').classList.toggle('hidden', mode !== 'direct');
       $('animeMode').classList.toggle('hidden', mode !== 'anime');
       if (mode === 'anime') {
+        uploadedImage = animeImage;   // restore anime mode's image
         generateBtn.innerHTML = '✨ 动漫化 + 生成图纸';
-        generateBtn.disabled = !animeOriginalFile;
+        generateBtn.disabled = !animeImage && !animeOriginalFile;
       } else {
+        uploadedImage = directImage;  // restore direct mode's image
         generateBtn.innerHTML = '✨ 生成拼豆图纸';
-        generateBtn.disabled = !uploadedImage;
+        generateBtn.disabled = !directImage;
       }
     });
   });
@@ -1534,6 +1538,7 @@
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
+        directImage = img;
         uploadedImage = img;
         uploadZone.innerHTML = '';
         const preview = document.createElement('img');
@@ -1576,6 +1581,7 @@
     reader.readAsDataURL(f);
     // Reset anime result
     animeResult.classList.add('hidden');
+    animeImage = null;
     uploadedImage = null;
     generateBtn.disabled = true;
   }
@@ -1657,6 +1663,7 @@
         cartoonImg.src = imageUrl;
       });
 
+      animeImage = cartoonImg;
       uploadedImage = cartoonImg;
       animeBeforeImg.src = animeOriginalBlob;
       animeAfterImg.src = imageUrl;
@@ -1768,6 +1775,7 @@
         const cartoonImg = new Image();
         if (!item.cartoon.startsWith('data:')) cartoonImg.crossOrigin = 'anonymous';
         cartoonImg.onload = () => {
+          animeImage = cartoonImg;
           uploadedImage = cartoonImg;
           animeBeforeImg.src = item.original;
           animeAfterImg.src = item.cartoon;
@@ -1803,10 +1811,18 @@
   //  Generate
   // ================================================================
   generateBtn.addEventListener('click', () => {
-    if (mode === 'anime' && !uploadedImage) {
-      doAnimeConvert();
-    } else {
+    if (mode === 'direct') {
+      if (!directImage) return;
+      uploadedImage = directImage;
       doGenerate();
+    } else {
+      // anime mode
+      if (!animeImage) {
+        doAnimeConvert();   // no cartoon yet → convert first
+      } else {
+        uploadedImage = animeImage;
+        doGenerate();       // cartoon ready → generate pattern
+      }
     }
   });
 
