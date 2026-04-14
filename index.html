@@ -639,17 +639,17 @@
     <div class="card">
       <div class="setting-row"><span class="setting-label">🎯 难度档位</span></div>
       <div class="diff-tiers" id="diffTiers">
-        <div class="diff-btn active" data-diff="easy">
+        <div class="diff-btn" data-diff="easy">
           <span class="diff-dot">🟢</span>
           <div class="diff-name">简单</div>
           <div class="diff-desc">大色块<br>≤16色</div>
-          <span class="diff-time">2h以内</span>
+          <span class="diff-time">1-2小时</span>
         </div>
-        <div class="diff-btn" data-diff="medium">
+        <div class="diff-btn active" data-diff="medium">
           <span class="diff-dot">🟡</span>
           <div class="diff-name">中等</div>
           <div class="diff-desc">少量细节<br>≤32色</div>
-          <span class="diff-time">半天</span>
+          <span class="diff-time">4-6小时</span>
         </div>
         <div class="diff-btn" data-diff="hard">
           <span class="diff-dot">🔴</span>
@@ -1246,7 +1246,7 @@
   let uploadedImage = null;
   let animeOriginalFile = null; // base64 of original photo for anime mode
   let animeOriginalBlob = null; // blob URL for preview
-  let difficulty = 'easy';
+  let difficulty = 'medium';
   let activeBrand = 'mard';
   let displayBrand = 'mard';
   let activePalette = PALETTES.mard.colors;
