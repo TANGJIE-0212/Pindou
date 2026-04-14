@@ -331,36 +331,42 @@
   .pattern-table .grid5-r { border-top: 0.5px solid rgba(255,107,157,0.12); }
   .pattern-table .grid5-c { border-left: 0.5px solid rgba(255,107,157,0.12); }
 
-  /* Fullscreen overlay */
-  .fullscreen-overlay {
+  /* ===== Fullscreen View ===== */
+  .fs-overlay {
     display: none; position: fixed; inset: 0; z-index: 1000;
-    background: rgba(0,0,0,0.92);
-    align-items: center; justify-content: center;
-    flex-direction: column;
+    background: #f5f0eb; flex-direction: column;
   }
-  .fullscreen-overlay.show { display: flex; }
-  .fullscreen-close {
-    position: absolute; top: 16px; right: 16px;
-    width: 44px; height: 44px; border-radius: 8px;
-    background: rgba(255,255,255,0.15); border: none;
-    color: white; font-size: 24px; cursor: pointer;
+  .fs-overlay.show { display: flex; }
+  .fs-close {
+    position: fixed; top: 12px; right: 12px; z-index: 1010;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(0,0,0,0.45); border: none;
+    color: white; font-size: 20px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
   }
-  .fullscreen-inner {
-    overflow: auto; -webkit-overflow-scrolling: touch;
-    max-width: 100vw; max-height: 90vh;
+  .fs-area {
+    flex: 1; overflow: hidden; position: relative;
+    touch-action: none; width: 100%; height: 100%;
   }
-  .fullscreen-rotate {
-    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 12px;
+  .fs-area canvas {
+    position: absolute; top: 0; left: 0;
+    transform-origin: 0 0;
   }
-  .fullscreen-rotate button {
-    padding: 10px 20px; border-radius: 8px;
-    background: rgba(255,255,255,0.15); border: none;
-    color: white; font-size: 14px; font-weight: 700;
+  .fs-toolbar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 1010;
+    display: flex; gap: 8px;
+    background: rgba(0,0,0,0.5); border-radius: 24px;
+    padding: 6px 14px; backdrop-filter: blur(8px);
+  }
+  .fs-toolbar button {
+    padding: 8px 14px; border-radius: 16px;
+    background: transparent; border: none;
+    color: white; font-size: 13px; font-weight: 700;
     font-family: 'Nunito', sans-serif; cursor: pointer;
+    white-space: nowrap;
   }
-  .fullscreen-rotate button:active { background: rgba(255,255,255,0.3); }
+  .fs-toolbar button:active { background: rgba(255,255,255,0.2); }
 
   /* ===== Bottom action buttons ===== */
   .action-bar {
@@ -369,78 +375,125 @@
   }
   .action-bar .btn { flex: 1; min-width: 100px; padding: 11px 8px; font-size: 13px; }
 
-  /* ===== Drawer panel ===== */
-  .drawer-overlay {
-    display: none; position: fixed; inset: 0; z-index: 500;
-    background: rgba(0,0,0,0.4);
-  }
-  .drawer-overlay.show { display: block; }
-  .drawer {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    z-index: 501; background: white;
-    border-radius: 16px 16px 0 0;
-    max-height: 75vh; overflow-y: auto;
-    transform: translateY(100%); transition: transform 0.3s ease;
-    padding: 20px 16px 32px; -webkit-overflow-scrolling: touch;
-  }
-  .drawer.show { transform: translateY(0); }
-  .drawer-handle {
-    width: 40px; height: 5px; background: #E0D0D6; border-radius: 3px;
-    margin: 0 auto 16px;
-  }
-
-  /* Tool buttons */
-  .drawer-tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .dtool-btn {
-    width: 56px; height: 56px; border-radius: 10px;
-    background: var(--bg); border: 2px solid transparent;
-    font-size: 24px; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.04);
-  }
-  .dtool-btn.active { border-color: var(--pink); background: #FFF0F5; box-shadow: 2px 2px 0 rgba(255,107,157,0.15); }
-  .dtool-btn:active { transform: translate(1px, 1px); box-shadow: 0 0 0 transparent; }
-  .dtool-label { font-size: 9px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
-
-  /* Palette */
-  .palette-grid {
-    display: grid; grid-template-columns: repeat(8, 1fr);
-    gap: 5px; max-height: 200px; overflow-y: auto;
-    padding: 6px; background: var(--bg); border-radius: 8px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .palette-swatch {
-    aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
-    cursor: pointer; transition: all 0.15s; position: relative;
-    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.1);
-  }
-  .palette-swatch:active { transform: scale(0.85); }
-  .palette-swatch.selected {
-    border-color: var(--text);
-    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--pink);
-    transform: scale(1.15); z-index: 2;
-  }
-
-  /* Stats */
-  .color-stats { display: flex; flex-wrap: wrap; gap: 8px; }
-  .color-chip {
-    display: flex; align-items: center; gap: 5px; background: var(--bg);
-    border-radius: 8px; padding: 4px 10px 4px 4px; font-size: 12px; font-weight: 700;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.03);
-  }
-  .color-dot {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.1); flex-shrink: 0;
-    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.1);
-  }
-
   .palette-tag {
     display: inline-block;
     background: linear-gradient(135deg, var(--yellow-light), var(--yellow));
     color: var(--text); font-size: 11px; font-weight: 700;
     padding: 2px 8px; border-radius: 6px; margin-left: 6px;
   }
+
+  /* ===== Fullscreen Editor ===== */
+  .editor-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: #f5f0eb;
+    flex-direction: column;
+  }
+  .editor-overlay.show { display: flex; }
+  .editor-topbar {
+    position: relative; z-index: 2010;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .editor-back, .editor-done {
+    background: none; border: none; font-size: 15px; font-weight: 700;
+    cursor: pointer; padding: 6px 10px; border-radius: 8px;
+    font-family: 'Nunito', sans-serif;
+  }
+  .editor-back { color: #888; }
+  .editor-done { color: var(--pink); }
+  .editor-back:active, .editor-done:active { background: rgba(0,0,0,0.05); }
+  .editor-topbar-actions {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .etop-btn {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: none; cursor: pointer;
+    padding: 4px 10px; border-radius: 8px; font-size: 18px;
+    transition: background 0.12s;
+  }
+  .etop-btn span { font-size: 9px; font-weight: 700; color: var(--text-light); }
+  .etop-btn:active { background: rgba(0,0,0,0.06); }
+  .etop-btn.disabled { opacity: 0.3; pointer-events: none; }
+  .editor-canvas-area {
+    flex: 1; overflow: hidden; position: relative;
+    touch-action: none;
+  }
+  .editor-canvas-area canvas {
+    position: absolute; top: 0; left: 0;
+    transform-origin: 0 0;
+  }
+  .editor-toolbar {
+    position: relative; z-index: 2010;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .editor-tool-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .editor-tools {
+    display: flex; gap: 4px; flex-shrink: 0;
+  }
+  .etool-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 50px; height: 48px; border-radius: 10px;
+    background: var(--bg); border: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.04);
+  }
+  .etool-icon { font-size: 18px; }
+  .etool-label { font-size: 8px; font-weight: 700; color: var(--text-light); margin-top: 1px; }
+  .etool-btn.active { border-color: var(--pink); background: #FFF0F5; }
+  .etool-btn:active { transform: scale(0.92); }
+  /* Recent colors row next to tools */
+  .editor-recent-colors {
+    display: flex; gap: 3px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    flex: 1; align-items: center; padding: 2px 0;
+  }
+  .erc-item {
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; width: 40px;
+  }
+  .erc-swatch {
+    width: 32px; height: 32px; border-radius: 6px;
+    border: 2px solid rgba(0,0,0,0.08);
+    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.08);
+  }
+  .erc-item.selected .erc-swatch {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--pink);
+  }
+  .erc-code { font-size: 7px; font-weight: 700; color: var(--text-light); margin-top: 1px; white-space: nowrap; }
+  /* Color library panel */
+  .editor-colorlib {
+    display: none; max-height: 220px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 6px; padding: 6px;
+    background: var(--bg); border-radius: 10px;
+  }
+  .editor-colorlib.show { display: block; }
+  .editor-colorlib-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 4px;
+  }
+  .ecl-item {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; padding: 3px 2px; border-radius: 8px;
+    border: 2px solid transparent; transition: all 0.12s;
+  }
+  .ecl-item:active { transform: scale(0.9); }
+  .ecl-item.selected { border-color: var(--pink); background: #FFF0F5; }
+  .ecl-swatch {
+    width: 100%; aspect-ratio: 1; border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: inset -1px -1px 0 rgba(0,0,0,0.06);
+  }
+  .ecl-code { font-size: 8px; font-weight: 700; color: var(--text); margin-top: 2px; }
 
   /* (API key UI removed — key is on server side) */
   .anime-before-after {
@@ -740,17 +793,13 @@
           <table class="pattern-table" id="patternTable"></table>
         </div>
       </div>
-      <div style="text-align:center;margin-top:8px">
-        <span style="font-size:11px;color:var(--text-light);font-weight:600">👆 滑动查看 · 点击全屏旋转</span>
-      </div>
     </div>
 
     <!-- 底部操作栏 -->
     <div class="card" style="padding:14px">
       <div class="action-bar">
+        <button class="btn btn-outline btn-small" id="toolsBtn">🛠️ 编辑图纸</button>
         <button class="btn btn-secondary btn-small" id="saveBtn">💾 保存图片</button>
-        <button class="btn btn-outline btn-small" id="toolsBtn">🛠️ 编辑工具</button>
-        <button class="btn btn-outline btn-small" id="statsBtn">📊 配色清单</button>
       </div>
       <div class="action-bar" style="margin-top:8px">
         <button class="btn btn-outline btn-small" id="backBtn">🏠 返回首页</button>
@@ -759,47 +808,53 @@
   </div>
 </div>
 
-<!-- ===== 全屏旋转查看 ===== -->
-<div class="fullscreen-overlay" id="fullscreenOverlay">
-  <button class="fullscreen-close" id="fullscreenClose">✕</button>
-  <div class="fullscreen-inner" id="fullscreenInner"></div>
-  <div class="fullscreen-rotate">
-    <button id="rotateBtn">🔄 旋转 90°</button>
-    <button id="fullscreenSaveBtn">💾 保存</button>
+<!-- ===== 全屏查看 ===== -->
+<div class="fs-overlay" id="fsOverlay">
+  <button class="fs-close" id="fsClose">✕</button>
+  <div class="fs-area" id="fsArea"></div>
+  <div class="fs-toolbar">
+    <button id="fsFitBtn">适屏</button>
+    <button id="fsSaveBtn">💾 保存</button>
   </div>
 </div>
 
-<!-- ===== 工具抽屉 ===== -->
-<div class="drawer-overlay" id="toolsOverlay"></div>
-<div class="drawer" id="toolsDrawer">
-  <div class="drawer-handle"></div>
-  <div class="card-title">🛠️ 编辑工具</div>
-  <div class="drawer-tools" id="drawerTools">
-    <button class="dtool-btn active" data-tool="pencil">
-      <span>✏️</span><span class="dtool-label">画笔</span>
-    </button>
-    <button class="dtool-btn" data-tool="eraser">
-      <span>🧹</span><span class="dtool-label">橡皮</span>
-    </button>
-    <button class="dtool-btn" data-tool="move">
-      <span>🤚</span><span class="dtool-label">移动</span>
-    </button>
-    <button class="dtool-btn" data-tool="undo">
-      <span>↩️</span><span class="dtool-label">撤销</span>
-    </button>
+<!-- ===== 全屏编辑器 ===== -->
+<div class="editor-overlay" id="editorOverlay">
+  <!-- 画布区 -->
+  <div class="editor-canvas-area" id="editorCanvasArea">
+    <canvas id="editorCanvas"></canvas>
   </div>
-  <div style="margin-top:16px">
-    <div class="card-title">🎨 选色</div>
-    <div class="palette-grid" id="paletteGrid"></div>
+  <!-- 顶部栏: 返回 + 标题 + 功能按钮 -->
+  <div class="editor-topbar">
+    <button class="editor-back" id="editorBack">✕</button>
+    <div class="editor-topbar-actions">
+      <button class="etop-btn" id="edColorLibBtn">🎨<span>色库</span></button>
+      <button class="etop-btn" id="edUndoBtn">↩️<span>撤销</span></button>
+      <button class="etop-btn" id="edRedoBtn">↪️<span>重做</span></button>
+    </div>
+    <button class="editor-done" id="editorDone">完成</button>
   </div>
-</div>
-
-<!-- ===== 配色清单抽屉 ===== -->
-<div class="drawer-overlay" id="statsOverlay"></div>
-<div class="drawer" id="statsDrawer">
-  <div class="drawer-handle"></div>
-  <div class="card-title">📊 配色清单 <span class="palette-tag" id="beadCount2"></span></div>
-  <div class="color-stats" id="colorStats"></div>
+  <!-- 工具 + 最近使用颜色 -->
+  <div class="editor-toolbar">
+    <div class="editor-tool-row">
+      <div class="editor-tools" id="editorTools">
+        <button class="etool-btn active" data-tool="pencil">
+          <span class="etool-icon">✏️</span><span class="etool-label">画笔</span>
+        </button>
+        <button class="etool-btn" data-tool="eraser">
+          <span class="etool-icon">🧹</span><span class="etool-label">橡皮擦</span>
+        </button>
+        <button class="etool-btn" data-tool="bigEraser">
+          <span class="etool-icon">🧽</span><span class="etool-label">大橡皮</span>
+        </button>
+      </div>
+      <div class="editor-recent-colors" id="edRecentColors"></div>
+    </div>
+    <!-- 完整色库面板 (默认隐藏) -->
+    <div class="editor-colorlib" id="edColorLib">
+      <div class="editor-colorlib-grid" id="edColorLibGrid"></div>
+    </div>
+  </div>
 </div>
 
 <script src="algo-shared.js"></script>
@@ -1222,12 +1277,7 @@
   const saveBtn       = $('saveBtn');
   const backBtn       = $('backBtn');
   const toolsBtn      = $('toolsBtn');
-  const statsBtn      = $('statsBtn');
   const beadCountTag  = $('beadCount');
-  const beadCount2    = $('beadCount2');
-  const colorStatsEl  = $('colorStats');
-  const paletteGrid   = $('paletteGrid');
-  const drawerTools   = $('drawerTools');
 
   // Anime mode elements
   const animeUploadZone  = $('animeUploadZone');
@@ -1263,7 +1313,6 @@
   let undoStack = [];
   const MAX_UNDO = 40;
   let fidelityValue = 15; // default
-  let fullscreenRotation = 0;
   let previewLayout = null;
   const EMPTY = -1;
 
@@ -1915,137 +1964,553 @@
   }
 
   // ================================================================
-  //  Fullscreen view
+  //  Fullscreen View (pinch-to-zoom)
   // ================================================================
-  const overlay = $('fullscreenOverlay');
-  const fsInner = $('fullscreenInner');
+  const fsOverlay = $('fsOverlay');
+  const fsArea    = $('fsArea');
+  let fsCanvas = null;
+  let fsScale = 1, fsMinScale = 0.1, fsMaxScale = 8;
+  let fsTx = 0, fsTy = 0;
+  let _fsPtrs = new Map();
+  let _fsLastDist = 0, _fsLastMidX = 0, _fsLastMidY = 0;
+  let _fsDrag = false, _fsDX0 = 0, _fsDY0 = 0, _fsTx0 = 0, _fsTy0 = 0;
 
-  patternScroll.addEventListener('click', openFullscreen);
+  patternScroll.addEventListener('click', openFsView);
 
-  function openFullscreen() {
-    fullscreenRotation = 0;
-    fsInner.innerHTML = '';
-    const canvas = document.createElement('canvas');
-    const cell = 24;
-    const header = 18;
-    drawPatternToCanvas(canvas, {
-      cell,
-      header,
-      width: header * 2 + cell * gW,
-      height: header * 2 + cell * gH
-    }, true);
-    fsInner.appendChild(canvas);
-    fsInner.style.transform = '';
-    overlay.classList.add('show');
+  function openFsView() {
+    fsArea.innerHTML = '';
+    fsCanvas = document.createElement('canvas');
+    drawFsCanvas(fsCanvas, 24, 20);
+    fsArea.appendChild(fsCanvas);
+    fsOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
+    requestAnimationFrame(fsFit);
   }
 
-  $('fullscreenClose').addEventListener('click', closeFullscreen);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeFullscreen(); });
+  function drawFsCanvas(canvas, cell, hdr) {
+    const gw = hdr * 2 + cell * gW;
+    const gh = hdr * 2 + cell * gH;
+    // Legend
+    const cnt = {};
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+      }
+    const used = Object.keys(cnt).map(Number).sort((a, b) => a - b);
+    const legCols = Math.min(4, Math.max(2, Math.floor(gw / 150)));
+    const legItemH = 20;
+    const legPadT = 14, legPadB = 10;
+    const legRows = Math.ceil(used.length / legCols);
+    const legendH = legPadT + legRows * legItemH + legPadB;
+    const totalW = gw, totalH = gh + legendH;
 
-  function closeFullscreen() {
-    overlay.classList.remove('show');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(totalW * dpr);
+    canvas.height = Math.round(totalH * dpr);
+    canvas.style.width = totalW + 'px';
+    canvas.style.height = totalH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(0, 0, totalW, totalH);
+
+    // Row/col numbers
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const nf = Math.max(7, Math.floor(hdr * 0.48));
+    ctx.font = '700 ' + nf + 'px Courier New'; ctx.fillStyle = '#8B7B8E';
+    for (let x = 0; x < gW; x++) {
+      const cx = hdr + x * cell + cell / 2;
+      ctx.fillText(String(x + 1), cx, hdr / 2);
+      ctx.fillText(String(x + 1), cx, gh - hdr / 2);
+    }
+    for (let y = 0; y < gH; y++) {
+      const cy = hdr + y * cell + cell / 2;
+      ctx.fillText(String(y + 1), hdr / 2, cy);
+      ctx.fillText(String(y + 1), gw - hdr / 2, cy);
+    }
+    // Cells
+    const ts = Math.max(5, Math.floor(cell * 0.32));
+    ctx.font = '700 ' + ts + 'px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const bead = ci >= 0 ? activePalette[ci] : null;
+        const px = hdr + x * cell, py = hdr + y * cell;
+        ctx.fillStyle = bead ? bead.h : '#FFF';
+        ctx.fillRect(px, py, cell, cell);
+        ctx.strokeStyle = 'rgba(0,0,0,0.10)'; ctx.lineWidth = 0.5;
+        ctx.strokeRect(px + 0.25, py + 0.25, cell - 0.5, cell - 0.5);
+        if (bead) {
+          ctx.fillStyle = luminance(bead.h) < 100 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.65)';
+          ctx.fillText(shortRef(getDisplayName(bead.n)), px + cell / 2, py + cell / 2);
+        }
+      }
+    }
+    // Every-5 bold lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1.2;
+    for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+      if (i <= gW) { const xp = hdr + i * cell; ctx.beginPath(); ctx.moveTo(xp, hdr); ctx.lineTo(xp, gh - hdr); ctx.stroke(); }
+      if (i <= gH) { const yp = hdr + i * cell; ctx.beginPath(); ctx.moveTo(hdr, yp); ctx.lineTo(gw - hdr, yp); ctx.stroke(); }
+    }
+    ctx.strokeStyle = '#8B7B8E'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(hdr, hdr, gW * cell, gH * cell);
+
+    // Legend
+    const lt = gh + legPadT;
+    const cW = Math.floor(totalW / legCols);
+    const sw = 24, sh = 14;
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < used.length; i++) {
+      const ci = used[i]; const bead = activePalette[ci]; if (!bead) continue;
+      const col = i % legCols, row = Math.floor(i / legCols);
+      const lx = col * cW + 8, ly = lt + row * legItemH;
+      ctx.fillStyle = bead.h; ctx.fillRect(lx, ly + 1, sw, sh);
+      ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5; ctx.strokeRect(lx, ly + 1, sw, sh);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#333'; ctx.font = '600 10px Courier New';
+      const code = shortRef(getDisplayName(bead.n));
+      ctx.fillText(code, lx + sw + 4, ly + 1 + sh / 2);
+      ctx.fillStyle = '#999'; ctx.font = '400 10px Courier New';
+      ctx.fillText(' ×' + cnt[ci], lx + sw + 4 + ctx.measureText(code).width, ly + 1 + sh / 2);
+    }
+  }
+
+  function fsFit() {
+    if (!fsCanvas) return;
+    const cw = fsArea.clientWidth, ch = fsArea.clientHeight;
+    const iw = parseFloat(fsCanvas.style.width), ih = parseFloat(fsCanvas.style.height);
+    fsScale = Math.min(cw / iw, ch / ih, 1) * 0.95;
+    fsMinScale = fsScale * 0.5;
+    fsTx = (cw - iw * fsScale) / 2; fsTy = (ch - ih * fsScale) / 2;
+    fsApply();
+  }
+  function fsApply() {
+    if (fsCanvas) fsCanvas.style.transform = 'translate(' + fsTx + 'px,' + fsTy + 'px) scale(' + fsScale + ')';
+  }
+
+  fsArea.addEventListener('pointerdown', fsPD, { passive: false });
+  fsArea.addEventListener('pointermove', fsPM, { passive: false });
+  fsArea.addEventListener('pointerup', fsPU);
+  fsArea.addEventListener('pointercancel', fsPU);
+  fsArea.addEventListener('wheel', fsWh, { passive: false });
+
+  function fsPD(e) {
+    e.preventDefault(); fsArea.setPointerCapture(e.pointerId);
+    _fsPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (_fsPtrs.size === 1) { _fsDrag = true; _fsDX0 = e.clientX; _fsDY0 = e.clientY; _fsTx0 = fsTx; _fsTy0 = fsTy; }
+    if (_fsPtrs.size === 2) {
+      _fsDrag = false;
+      const p = [..._fsPtrs.values()];
+      _fsLastDist = Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y);
+      _fsLastMidX = (p[0].x + p[1].x) / 2; _fsLastMidY = (p[0].y + p[1].y) / 2;
+    }
+  }
+  function fsPM(e) {
+    if (!_fsPtrs.has(e.pointerId)) return; e.preventDefault();
+    _fsPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (_fsPtrs.size === 2) {
+      const p = [..._fsPtrs.values()];
+      const d = Math.hypot(p[1].x - p[0].x, p[1].y - p[0].y);
+      const mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
+      if (_fsLastDist > 0) {
+        const ns = Math.min(fsMaxScale, Math.max(fsMinScale, fsScale * (d / _fsLastDist)));
+        const r = fsArea.getBoundingClientRect();
+        const ox = mx - r.left, oy = my - r.top;
+        fsTx = ox - (ox - fsTx) * (ns / fsScale); fsTy = oy - (oy - fsTy) * (ns / fsScale);
+        fsScale = ns; fsTx += mx - _fsLastMidX; fsTy += my - _fsLastMidY; fsApply();
+      }
+      _fsLastDist = d; _fsLastMidX = mx; _fsLastMidY = my;
+    } else if (_fsPtrs.size === 1 && _fsDrag) {
+      fsTx = _fsTx0 + (e.clientX - _fsDX0); fsTy = _fsTy0 + (e.clientY - _fsDY0); fsApply();
+    }
+  }
+  function fsPU(e) {
+    _fsPtrs.delete(e.pointerId);
+    if (_fsPtrs.size < 2) _fsLastDist = 0;
+    if (_fsPtrs.size === 0) _fsDrag = false;
+    if (_fsPtrs.size === 1) {
+      const pt = [..._fsPtrs.values()][0];
+      _fsDrag = true; _fsDX0 = pt.x; _fsDY0 = pt.y; _fsTx0 = fsTx; _fsTy0 = fsTy;
+    }
+  }
+  function fsWh(e) {
+    if (!fsCanvas) return; e.preventDefault();
+    const f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const ns = Math.min(fsMaxScale, Math.max(fsMinScale, fsScale * f));
+    const r = fsArea.getBoundingClientRect();
+    const ox = e.clientX - r.left, oy = e.clientY - r.top;
+    fsTx = ox - (ox - fsTx) * (ns / fsScale); fsTy = oy - (oy - fsTy) * (ns / fsScale);
+    fsScale = ns; fsApply();
+  }
+
+  $('fsClose').addEventListener('click', closeFsView);
+  function closeFsView() {
+    fsOverlay.classList.remove('show'); document.body.style.overflow = '';
+    _fsPtrs.clear(); fsCanvas = null;
+  }
+  $('fsFitBtn').addEventListener('click', fsFit);
+  $('fsSaveBtn').addEventListener('click', () => doSave());
+
+  // ================================================================
+  //  Fullscreen Editor
+  // ================================================================
+  const editorOverlay = $('editorOverlay');
+  const editorArea    = $('editorCanvasArea');
+  const editorCanvas  = $('editorCanvas');
+  const editorTools   = $('editorTools');
+  const edRecentColors = $('edRecentColors');
+  const edColorLib    = $('edColorLib');
+  const edColorLibGrid = $('edColorLibGrid');
+  const edUndoBtn     = $('edUndoBtn');
+  const edRedoBtn     = $('edRedoBtn');
+
+  // editor zoom/pan state
+  let edScale = 1, edMinScale = 0.3, edMaxScale = 12;
+  let edTx = 0, edTy = 0;
+  let edCell = 24, edHeader = 20;
+  let _edPointers = new Map();
+  let _edLastDist = 0, _edLastMidX = 0, _edLastMidY = 0;
+  let _edDragging = false, _edDragX0 = 0, _edDragY0 = 0, _edTx0 = 0, _edTy0 = 0;
+  let edIsDrawing = false;
+  let recentColors = []; // recently used color indices (max 12)
+  let redoStack = [];
+
+  toolsBtn.addEventListener('click', openEditor);
+
+  function openEditor() {
+    if (!grid) return;
+    currentTool = 'pencil';
+    editorOverlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    edColorLib.classList.remove('show');
+    // Init recent colors from grid usage
+    if (recentColors.length === 0) {
+      const cnt = {};
+      for (let y = 0; y < gH; y++)
+        for (let x = 0; x < gW; x++) {
+          const i = grid[y][x];
+          if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+        }
+      recentColors = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 12).map(e => parseInt(e[0]));
+    }
+    editorTools.querySelectorAll('.etool-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tool === 'pencil'));
+    buildRecentColors();
+    buildColorLibGrid();
+    updateUndoRedoBtns();
+    renderEditorCanvas();
+    requestAnimationFrame(edZoomToFit);
+  }
+
+  function closeEditor() {
+    editorOverlay.classList.remove('show');
     document.body.style.overflow = '';
+    _edPointers.clear();
+    buildPatternTable();
+    updateStats();
   }
 
-  $('rotateBtn').addEventListener('click', () => {
-    fullscreenRotation = (fullscreenRotation + 90) % 360;
-    fsInner.style.transform = 'rotate(' + fullscreenRotation + 'deg)';
-  });
+  $('editorBack').addEventListener('click', closeEditor);
+  $('editorDone').addEventListener('click', closeEditor);
 
-  $('fullscreenSaveBtn').addEventListener('click', () => { doSave(); });
-
-  // ================================================================
-  //  Drawer: Tools
-  // ================================================================
-  const toolsOverlay = $('toolsOverlay');
-  const toolsDrawer = $('toolsDrawer');
-
-  toolsBtn.addEventListener('click', () => {
-    buildPaletteUI();
-    toolsOverlay.classList.add('show');
-    toolsDrawer.classList.add('show');
-  });
-  toolsOverlay.addEventListener('click', closeTools);
-  function closeTools() {
-    toolsOverlay.classList.remove('show');
-    toolsDrawer.classList.remove('show');
+  // --- Recent colors row ---
+  function addToRecent(idx) {
+    recentColors = recentColors.filter(i => i !== idx);
+    recentColors.unshift(idx);
+    if (recentColors.length > 12) recentColors.pop();
+    buildRecentColors();
   }
 
-  drawerTools.addEventListener('click', e => {
-    const btn = e.target.closest('.dtool-btn');
-    if (!btn) return;
-    const tool = btn.dataset.tool;
-    if (tool === 'undo') { undo(); return; }
-    currentTool = tool;
-    drawerTools.querySelectorAll('.dtool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
-  });
-
-  function buildPaletteUI() {
-    paletteGrid.innerHTML = '';
-    // Show only used colors + full palette
-    activePalette.forEach((b, i) => {
+  function buildRecentColors() {
+    edRecentColors.innerHTML = '';
+    recentColors.forEach(ci => {
+      const b = activePalette[ci];
+      if (!b) return;
       const el = document.createElement('div');
-      el.className = 'palette-swatch' + (i === selColorIdx ? ' selected' : '');
-      el.style.background = b.h;
-      el.title = getDisplayName(b.n);
-      el.dataset.idx = i;
+      el.className = 'erc-item' + (ci === selColorIdx ? ' selected' : '');
+      el.innerHTML = '<div class="erc-swatch" style="background:' + b.h + '"></div>'
+        + '<span class="erc-code">' + shortRef(getDisplayName(b.n)) + '</span>';
       el.addEventListener('click', () => {
-        selColorIdx = i;
-        paletteGrid.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('selected'));
-        el.classList.add('selected');
+        selColorIdx = ci;
+        currentTool = 'pencil';
+        editorTools.querySelectorAll('.etool-btn').forEach(bt =>
+          bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
+        buildRecentColors();
+        highlightColorLib();
       });
-      paletteGrid.appendChild(el);
+      edRecentColors.appendChild(el);
     });
   }
 
-  // ================================================================
-  //  Canvas interaction on preview
-  // ================================================================
-  let isDrawing = false;
-
-  patternCanvas.addEventListener('pointerdown', e => {
-    if (currentTool === 'move') return;
-    const cell = previewCellAt(e);
-    if (!cell) return;
-    isDrawing = true;
-    applyToolAt(cell.x, cell.y);
+  // --- Color library ---
+  $('edColorLibBtn').addEventListener('click', () => {
+    edColorLib.classList.toggle('show');
   });
 
-  patternCanvas.addEventListener('pointermove', e => {
-    if (!isDrawing) return;
-    const cell = previewCellAt(e);
-    if (cell) applyToolAt(cell.x, cell.y);
+  function buildColorLibGrid() {
+    edColorLibGrid.innerHTML = '';
+    activePalette.forEach((b, i) => {
+      const el = document.createElement('div');
+      el.className = 'ecl-item' + (i === selColorIdx ? ' selected' : '');
+      el.dataset.idx = i;
+      el.innerHTML = '<div class="ecl-swatch" style="background:' + b.h + '"></div>'
+        + '<span class="ecl-code">' + shortRef(getDisplayName(b.n)) + '</span>';
+      el.addEventListener('click', () => {
+        selColorIdx = i;
+        currentTool = 'pencil';
+        editorTools.querySelectorAll('.etool-btn').forEach(bt =>
+          bt.classList.toggle('active', bt.dataset.tool === 'pencil'));
+        addToRecent(i);
+        highlightColorLib();
+      });
+      edColorLibGrid.appendChild(el);
+    });
+  }
+
+  function highlightColorLib() {
+    edColorLibGrid.querySelectorAll('.ecl-item').forEach(el => {
+      el.classList.toggle('selected', parseInt(el.dataset.idx) === selColorIdx);
+    });
+  }
+
+  // --- Undo / Redo ---
+  function updateUndoRedoBtns() {
+    edUndoBtn.classList.toggle('disabled', undoStack.length === 0);
+    edRedoBtn.classList.toggle('disabled', redoStack.length === 0);
+  }
+
+  edUndoBtn.addEventListener('click', () => {
+    if (!undoStack.length) return;
+    redoStack.push(grid.map(r => [...r]));
+    grid = undoStack.pop();
+    renderEditorCanvas();
+    updateUndoRedoBtns();
   });
 
-  document.addEventListener('pointerup', () => { isDrawing = false; });
+  edRedoBtn.addEventListener('click', () => {
+    if (!redoStack.length) return;
+    undoStack.push(grid.map(r => [...r]));
+    grid = redoStack.pop();
+    renderEditorCanvas();
+    updateUndoRedoBtns();
+  });
 
-  function previewCellAt(e) {
-    if (!previewLayout) return null;
-    const rect = patternCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const gx = Math.floor((x - previewLayout.header) / previewLayout.cell);
-    const gy = Math.floor((y - previewLayout.header) / previewLayout.cell);
+  function renderEditorCanvas() {
+    const w = edHeader * 2 + edCell * gW;
+    const h = edHeader * 2 + edCell * gH;
+    const dpr = window.devicePixelRatio || 1;
+    editorCanvas.width = Math.round(w * dpr);
+    editorCanvas.height = Math.round(h * dpr);
+    editorCanvas.style.width = w + 'px';
+    editorCanvas.style.height = h + 'px';
+
+    const ctx = editorCanvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
+
+    // Row / col numbers
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const nf = Math.max(7, Math.floor(edHeader * 0.48));
+    ctx.font = '700 ' + nf + 'px Courier New';
+    ctx.fillStyle = '#8B7B8E';
+    for (let x = 0; x < gW; x++) {
+      const cx = edHeader + x * edCell + edCell / 2;
+      ctx.fillText(String(x + 1), cx, edHeader / 2);
+      ctx.fillText(String(x + 1), cx, h - edHeader / 2);
+    }
+    for (let y = 0; y < gH; y++) {
+      const cy = edHeader + y * edCell + edCell / 2;
+      ctx.fillText(String(y + 1), edHeader / 2, cy);
+      ctx.fillText(String(y + 1), w - edHeader / 2, cy);
+    }
+
+    // Grid cells
+    const ts = Math.max(5, Math.floor(edCell * 0.32));
+    ctx.font = '700 ' + ts + 'px Courier New';
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        const ci = grid[y][x];
+        const bead = ci >= 0 ? activePalette[ci] : null;
+        const px = edHeader + x * edCell;
+        const py = edHeader + y * edCell;
+        ctx.fillStyle = bead ? bead.h : '#FFFFFF';
+        ctx.fillRect(px, py, edCell, edCell);
+        ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(px + 0.25, py + 0.25, edCell - 0.5, edCell - 0.5);
+        if (bead) {
+          ctx.fillStyle = luminance(bead.h) < 100 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.65)';
+          ctx.fillText(shortRef(getDisplayName(bead.n)), px + edCell / 2, py + edCell / 2);
+        }
+      }
+    }
+
+    // Every-5 bold grid lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i <= Math.max(gW, gH); i += 5) {
+      if (i <= gW) {
+        const xp = edHeader + i * edCell;
+        ctx.beginPath(); ctx.moveTo(xp, edHeader); ctx.lineTo(xp, h - edHeader); ctx.stroke();
+      }
+      if (i <= gH) {
+        const yp = edHeader + i * edCell;
+        ctx.beginPath(); ctx.moveTo(edHeader, yp); ctx.lineTo(w - edHeader, yp); ctx.stroke();
+      }
+    }
+    // Outer border
+    ctx.strokeStyle = '#8B7B8E';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(edHeader, edHeader, gW * edCell, gH * edCell);
+  }
+
+  function applyEdTransform() {
+    editorCanvas.style.transform = 'translate(' + edTx + 'px,' + edTy + 'px) scale(' + edScale + ')';
+  }
+
+  function edZoomToFit() {
+    const cw = editorArea.clientWidth;
+    const ch = editorArea.clientHeight;
+    const iw = parseFloat(editorCanvas.style.width);
+    const ih = parseFloat(editorCanvas.style.height);
+    edScale = Math.min(cw / iw, ch / ih, 1) * 0.92;
+    edMinScale = edScale * 0.5;
+    edTx = (cw - iw * edScale) / 2;
+    edTy = (ch - ih * edScale) / 2;
+    applyEdTransform();
+  }
+
+  // --- Editor canvas pointer events ---
+  function edCellAt(clientX, clientY) {
+    const rect = editorCanvas.getBoundingClientRect();
+    const sx = (clientX - rect.left) / edScale;
+    const sy = (clientY - rect.top) / edScale;
+    const gx = Math.floor((sx - edHeader) / edCell);
+    const gy = Math.floor((sy - edHeader) / edCell);
     if (gx < 0 || gy < 0 || gx >= gW || gy >= gH) return null;
     return { x: gx, y: gy };
   }
 
-  function applyToolAt(x, y) {
-    if (currentTool === 'pencil') {
-      if (grid[y][x] === selColorIdx) return;
-      pushUndo();
-      grid[y][x] = selColorIdx;
-      renderPatternPreview();
-      updateStats();
-    } else if (currentTool === 'eraser') {
-      if (grid[y][x] === EMPTY) return;
-      pushUndo();
-      grid[y][x] = EMPTY;
-      renderPatternPreview();
-      updateStats();
+  editorArea.addEventListener('pointerdown', edOnDown, { passive: false });
+  editorArea.addEventListener('pointermove', edOnMove, { passive: false });
+  editorArea.addEventListener('pointerup', edOnUp);
+  editorArea.addEventListener('pointercancel', edOnUp);
+  editorArea.addEventListener('wheel', edOnWheel, { passive: false });
+
+  function edOnDown(e) {
+    e.preventDefault();
+    editorArea.setPointerCapture(e.pointerId);
+    _edPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (_edPointers.size === 1) {
+      // Single finger → draw
+      edIsDrawing = true;
+      _edDragX0 = e.clientX; _edDragY0 = e.clientY;
+      _edTx0 = edTx; _edTy0 = edTy;
+      const c = edCellAt(e.clientX, e.clientY);
+      if (c) edApplyTool(c.x, c.y);
+    }
+    if (_edPointers.size === 2) {
+      // Switch to pinch-zoom regardless of tool
+      edIsDrawing = false;
+      _edDragging = false;
+      const pts = [..._edPointers.values()];
+      _edLastDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      _edLastMidX = (pts[0].x + pts[1].x) / 2;
+      _edLastMidY = (pts[0].y + pts[1].y) / 2;
     }
   }
+
+  function edOnMove(e) {
+    if (!_edPointers.has(e.pointerId)) return;
+    e.preventDefault();
+    _edPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (_edPointers.size === 2) {
+      const pts = [..._edPointers.values()];
+      const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      if (_edLastDist > 0) {
+        const ratio = dist / _edLastDist;
+        const newScale = Math.min(edMaxScale, Math.max(edMinScale, edScale * ratio));
+        const rect = editorArea.getBoundingClientRect();
+        const ox = midX - rect.left;
+        const oy = midY - rect.top;
+        edTx = ox - (ox - edTx) * (newScale / edScale);
+        edTy = oy - (oy - edTy) * (newScale / edScale);
+        edScale = newScale;
+        edTx += midX - _edLastMidX;
+        edTy += midY - _edLastMidY;
+        applyEdTransform();
+      }
+      _edLastDist = dist;
+      _edLastMidX = midX;
+      _edLastMidY = midY;
+    } else if (_edPointers.size === 1 && edIsDrawing) {
+      const c = edCellAt(e.clientX, e.clientY);
+      if (c) edApplyTool(c.x, c.y);
+    }
+  }
+
+  function edOnUp(e) {
+    _edPointers.delete(e.pointerId);
+    if (_edPointers.size < 2) _edLastDist = 0;
+    if (_edPointers.size === 0) { _edDragging = false; edIsDrawing = false; }
+  }
+
+  function edOnWheel(e) {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const newScale = Math.min(edMaxScale, Math.max(edMinScale, edScale * factor));
+    const rect = editorArea.getBoundingClientRect();
+    const ox = e.clientX - rect.left;
+    const oy = e.clientY - rect.top;
+    edTx = ox - (ox - edTx) * (newScale / edScale);
+    edTy = oy - (oy - edTy) * (newScale / edScale);
+    edScale = newScale;
+    applyEdTransform();
+  }
+
+  function edApplyTool(x, y) {
+    if (currentTool === 'pencil') {
+      if (grid[y][x] === selColorIdx) return;
+      pushUndo(); redoStack = [];
+      grid[y][x] = selColorIdx;
+      addToRecent(selColorIdx);
+      renderEditorCanvas();
+      updateUndoRedoBtns();
+    } else if (currentTool === 'eraser') {
+      if (grid[y][x] === EMPTY) return;
+      pushUndo(); redoStack = [];
+      grid[y][x] = EMPTY;
+      renderEditorCanvas();
+      updateUndoRedoBtns();
+    } else if (currentTool === 'bigEraser') {
+      let changed = false;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < gW && ny < gH && grid[ny][nx] !== EMPTY) {
+            if (!changed) { pushUndo(); redoStack = []; changed = true; }
+            grid[ny][nx] = EMPTY;
+          }
+        }
+      }
+      if (changed) { renderEditorCanvas(); updateUndoRedoBtns(); }
+    }
+  }
+
+  // --- Editor tool select ---
+  editorTools.addEventListener('click', e => {
+    const btn = e.target.closest('.etool-btn');
+    if (!btn) return;
+    currentTool = btn.dataset.tool;
+    editorTools.querySelectorAll('.etool-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tool === currentTool));
+  });
 
   // ================================================================
   //  Undo
@@ -2062,45 +2527,15 @@
   }
 
   // ================================================================
-  //  Drawer: Stats
-  // ================================================================
-  const statsOverlay = $('statsOverlay');
-  const statsDrawer = $('statsDrawer');
-
-  statsBtn.addEventListener('click', () => {
-    updateStats();
-    statsOverlay.classList.add('show');
-    statsDrawer.classList.add('show');
-  });
-  statsOverlay.addEventListener('click', () => {
-    statsOverlay.classList.remove('show');
-    statsDrawer.classList.remove('show');
-  });
-
-  // ================================================================
   //  Stats
   // ================================================================
   function updateStats() {
     if (!grid) return;
-    const cnt = {};
     let tot = 0;
     for (let y = 0; y < gH; y++)
-      for (let x = 0; x < gW; x++) {
-        const i = grid[y][x];
-        if (i < 0) continue;
-        cnt[i] = (cnt[i] || 0) + 1;
-        tot++;
-      }
+      for (let x = 0; x < gW; x++)
+        if (grid[y][x] >= 0) tot++;
     beadCountTag.textContent = '共 ' + tot + ' 颗';
-    beadCount2.textContent = '共 ' + tot + ' 颗';
-
-    const sorted = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
-    colorStatsEl.innerHTML = sorted.map(([idx, c]) => {
-      const b = activePalette[parseInt(idx)];
-      const name = b ? getDisplayName(b.n) : '?';
-      const hex = b ? b.h : '#CCC';
-      return '<div class="color-chip"><div class="color-dot" style="background:' + hex + '"></div>' + name + ' × ' + c + '</div>';
-    }).join('');
   }
 
   // ================================================================
@@ -2110,14 +2545,34 @@
     if (!grid) return;
     const cellSize = 24;
     const hdrSize = 16;
-    const cw = hdrSize + cellSize * gW + hdrSize;
-    const ch = hdrSize + cellSize * gH + hdrSize;
+    const gridW = hdrSize + cellSize * gW + hdrSize;
+    const gridH = hdrSize + cellSize * gH + hdrSize;
+
+    // Count colors for legend
+    const cnt = {};
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+      }
+    const usedColors = Object.keys(cnt).map(Number).sort((a, b) => a - b);
+
+    // Legend layout
+    const legCols = Math.min(4, Math.max(2, Math.floor(gridW / 150)));
+    const legItemH = 20;
+    const legPadTop = 14;
+    const legPadBottom = 10;
+    const legRows = Math.ceil(usedColors.length / legCols);
+    const legendH = legPadTop + legRows * legItemH + legPadBottom;
+
+    const totalW = gridW;
+    const totalH = gridH + legendH;
 
     const cv = document.createElement('canvas');
-    cv.width = cw; cv.height = ch;
+    cv.width = totalW; cv.height = totalH;
     const ctx = cv.getContext('2d');
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillRect(0, 0, totalW, totalH);
 
     ctx.font = '7px Courier New';
     ctx.textAlign = 'center';
@@ -2128,7 +2583,7 @@
       const cx = hdrSize + x * cellSize + cellSize / 2;
       ctx.fillStyle = '#9B7E9E';
       ctx.fillText(String(x + 1), cx, hdrSize / 2);
-      ctx.fillText(String(x + 1), cx, ch - hdrSize / 2);
+      ctx.fillText(String(x + 1), cx, gridH - hdrSize / 2);
     }
 
     // Row headers
@@ -2136,7 +2591,7 @@
       const cy = hdrSize + y * cellSize + cellSize / 2;
       ctx.fillStyle = '#9B7E9E';
       ctx.fillText(String(y + 1), hdrSize / 2, cy);
-      ctx.fillText(String(y + 1), cw - hdrSize / 2, cy);
+      ctx.fillText(String(y + 1), gridW - hdrSize / 2, cy);
     }
 
     // Cells
@@ -2170,22 +2625,49 @@
     for (let i = 0; i <= Math.max(gW, gH); i += 5) {
       if (i <= gW) {
         const xp = hdrSize + i * cellSize;
-        ctx.beginPath(); ctx.moveTo(xp, hdrSize); ctx.lineTo(xp, ch - hdrSize); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xp, hdrSize); ctx.lineTo(xp, gridH - hdrSize); ctx.stroke();
       }
       if (i <= gH) {
         const yp = hdrSize + i * cellSize;
-        ctx.beginPath(); ctx.moveTo(hdrSize, yp); ctx.lineTo(cw - hdrSize, yp); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hdrSize, yp); ctx.lineTo(gridW - hdrSize, yp); ctx.stroke();
       }
     }
 
-    // Legend at bottom
-    const cnt = {};
-    for (let y = 0; y < gH; y++)
-      for (let x = 0; x < gW; x++) {
-        const i = grid[y][x];
-        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
-      }
-    // (legend is in the stats drawer, image is the grid itself)
+    // Outer border
+    ctx.strokeStyle = '#8B7B8E';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(hdrSize, hdrSize, gW * cellSize, gH * cellSize);
+
+    // --- Color Legend ---
+    const legTop = gridH + legPadTop;
+    const colW = Math.floor(totalW / legCols);
+    const swatchW = 24, swatchH = 14;
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < usedColors.length; i++) {
+      const ci = usedColors[i];
+      const bead = activePalette[ci];
+      if (!bead) continue;
+      const col = i % legCols;
+      const row = Math.floor(i / legCols);
+      const lx = col * colW + 8;
+      const ly = legTop + row * legItemH;
+      // Swatch
+      ctx.fillStyle = bead.h;
+      ctx.fillRect(lx, ly + 1, swatchW, swatchH);
+      ctx.strokeStyle = '#ccc';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(lx, ly + 1, swatchW, swatchH);
+      // Code + count
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#333';
+      ctx.font = '600 10px Courier New';
+      const code = shortRef(getDisplayName(bead.n));
+      ctx.fillText(code, lx + swatchW + 4, ly + 1 + swatchH / 2);
+      ctx.fillStyle = '#999';
+      ctx.font = '400 10px Courier New';
+      const codeW = ctx.measureText(code).width;
+      ctx.fillText(' ×' + cnt[ci], lx + swatchW + 4 + codeW, ly + 1 + swatchH / 2);
+    }
 
     const a = document.createElement('a');
     a.download = '拼豆图纸_' + gW + 'x' + gH + '.png';
@@ -2199,7 +2681,7 @@
   //  Algorithm dispatcher (实际代码在 algo-shared/ours/competitor.js)
   //  切换算法：改 currentAlgo 即可  'competitor' | 'ours'
   // ================================================================
-  let currentAlgo = 'ours';   // ← 改成 'competitor' 切到竞品方案
+  let currentAlgo = 'competitor';   // ← 改成 'ours' 切到我们的方案
 
   function quantize(imgData, w, h, numC) {
     if (currentAlgo === 'competitor') {
