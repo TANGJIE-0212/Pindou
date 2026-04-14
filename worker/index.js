@@ -77,8 +77,8 @@ export default {
           model: 'Qwen/Qwen-Image-Edit-2509',
           prompt: body.prompt || 'Convert this photo into a cute flat-color cartoon / anime illustration style. Use clean outlines, solid fill colors with minimal gradients, bright and vivid palette. Keep the main subject clearly recognizable. The style should look like a simplified cartoon sticker — ideal for pixel art / perler bead patterns.',
           image: body.image,
-          num_inference_steps: 28,
-          cfg: 3.5
+          num_inference_steps: 20,
+          cfg: 3.0
         })
       });
 
