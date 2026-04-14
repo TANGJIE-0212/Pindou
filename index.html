@@ -1510,7 +1510,7 @@
     if (mode === 'anime') generateBtn.disabled = !animeOriginalFile;
   }
 
-  // Compress image to max 1024px, JPEG 80%
+  // Compress image to max 768px, JPEG 70%
   function compressImage(dataUrl, maxSize) {
     return new Promise(resolve => {
       const img = new Image();
@@ -1522,7 +1522,7 @@
         c.width = w; c.height = h;
         const ctx = c.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(c.toDataURL('image/jpeg', 0.8));
+        resolve(c.toDataURL('image/jpeg', 0.7));
       };
       img.src = dataUrl;
     });
@@ -1544,9 +1544,9 @@
       setAnimeStep('🗜️ 正在压缩图片...', '减小体积，加速上传');
       await tick();
 
-      const compressed = await compressImage(animeOriginalFile, 1024);
+      const compressed = await compressImage(animeOriginalFile, 768);
 
-      setAnimeStep('📡 正在上传并动漫化...', '通常需要 5-10 秒');
+      setAnimeStep('📡 正在上传并动漫化...', '通常需要 3-6 秒');
 
       const resp = await fetch(ANIME_PROXY_URL, {
         method: 'POST',
