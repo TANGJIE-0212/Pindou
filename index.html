@@ -293,8 +293,7 @@
     overflow: hidden;
     border: 2px solid var(--pink-light); border-radius: 10px;
     background: white; position: relative;
-    min-height: 260px;
-    max-height: 72vh;
+    min-height: 300px;
     display: flex; align-items: center; justify-content: center;
     padding: 8px;
   }
@@ -1946,11 +1945,11 @@
     if (!grid) return;
     const pad = 16;
     const availW = Math.max(patternScroll.clientWidth - pad, 120);
-    const availH = Math.max(Math.min(window.innerHeight * 0.62, 620) - pad, 180);
+    const availH = Math.max(Math.min(window.innerHeight * 0.82, 960) - pad, 240);
     const header = clamp(Math.floor(Math.min(availW, availH) / 20), 10, 18);
     const cellW = Math.floor((availW - header * 2) / gW);
     const cellH = Math.floor((availH - header * 2) / gH);
-    const cell = clamp(Math.min(cellW, cellH), 5, 18);
+    const cell = clamp(Math.min(cellW, cellH), 5, 28);
     const width = header * 2 + cell * gW;
     const height = header * 2 + cell * gH;
     previewLayout = { header, cell, width, height };
