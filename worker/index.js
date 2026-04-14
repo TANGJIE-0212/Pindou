@@ -48,7 +48,7 @@ export default {
 
     if (ipCount >= 3) {
       return json({
-        error: '您今日的免费次数已用完（3次/IP/天）',
+        error: '您今日的免费次数已用完（3次/天）',
         remaining: { daily: 100 - dailyCount, ip: 0 }
       }, 429);
     }
