@@ -158,7 +158,7 @@
   }
 
   select {
-    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
     color: var(--text); background: var(--bg);
     border: 2px solid var(--pink-light); border-radius: 8px;
     padding: 8px 28px 8px 12px; outline: none; cursor: pointer;
@@ -170,9 +170,9 @@
 
   .size-inputs { display: flex; align-items: center; gap: 6px; }
   .size-input {
-    width: 52px; padding: 7px 4px; text-align: center;
+    width: 56px; padding: 8px 4px; text-align: center;
     border: 2px solid var(--pink-light); border-radius: 8px;
-    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
     color: var(--text); background: var(--bg); outline: none;
     box-shadow: 2px 2px 0 rgba(255,107,157,0.08);
   }
@@ -337,8 +337,8 @@
   }
   .fs-overlay.show { display: flex; }
   .fs-close {
-    position: fixed; top: 12px; right: 12px; z-index: 1010;
-    width: 40px; height: 40px; border-radius: 50%;
+    position: fixed; top: max(12px, env(safe-area-inset-top)); right: 12px; z-index: 1010;
+    width: 44px; height: 44px; border-radius: 50%;
     background: rgba(0,0,0,0.45); border: none;
     color: white; font-size: 20px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -359,11 +359,11 @@
     padding: 6px 14px; backdrop-filter: blur(8px);
   }
   .fs-toolbar button {
-    padding: 8px 14px; border-radius: 16px;
+    padding: 10px 16px; border-radius: 16px;
     background: transparent; border: none;
-    color: white; font-size: 13px; font-weight: 700;
+    color: white; font-size: 14px; font-weight: 700;
     font-family: 'Nunito', sans-serif; cursor: pointer;
-    white-space: nowrap;
+    white-space: nowrap; min-height: 44px;
   }
   .fs-toolbar button:active { background: rgba(255,255,255,0.2); }
 
@@ -792,19 +792,19 @@
         <div class="diff-btn" data-diff="easy">
           <span class="diff-dot">🟢</span>
           <div class="diff-name">简单</div>
-          <div class="diff-desc">大色块<br>≤16色</div>
+          <div class="diff-desc">大色块·少颜色<br>≤16色·适合新手</div>
           <span class="diff-time">1-2小时</span>
         </div>
         <div class="diff-btn active" data-diff="medium">
           <span class="diff-dot">🟡</span>
           <div class="diff-name">中等</div>
-          <div class="diff-desc">少量细节<br>≤32色</div>
+          <div class="diff-desc">更多细节<br>≤32色·最受欢迎</div>
           <span class="diff-time">4-6小时</span>
         </div>
         <div class="diff-btn" data-diff="hard">
           <span class="diff-dot">🔴</span>
           <div class="diff-name">困难</div>
-          <div class="diff-desc">大量细节<br>渐变色</div>
+          <div class="diff-desc">精细渐变<br>多色·适合老手</div>
           <span class="diff-time">一天+</span>
         </div>
       </div>
@@ -812,26 +812,26 @@
       <div class="setting-row">
         <span class="setting-label">🎨 色卡</span>
         <select id="paletteBrand">
-          <option value="mard" selected>Mard</option>
-          <option value="coco">Coco</option>
-          <option value="manman">漫漫</option>
-          <option value="panpan">盼盼</option>
-          <option value="mixiaowo">咪小窝</option>
+          <option value="mard" selected>Mard（291色）</option>
+          <option value="coco">Coco（168色）</option>
+          <option value="manman">漫漫（135色）</option>
+          <option value="panpan">盼盼（120色）</option>
+          <option value="mixiaowo">咪小窝（110色）</option>
         </select>
       </div>
 
       <div class="setting-row">
-        <span class="setting-label">🔲 尺寸</span>
+        <span class="setting-label">🔲 尺寸 <span style="font-size:10px;font-weight:600;color:var(--text-light)">（拼豆板格数）</span></span>
         <div class="size-inputs">
-          <input type="number" class="size-input" id="gridW" value="29" min="1" max="116">
+          <input type="number" class="size-input" id="gridW" value="29" min="1" max="116" inputmode="numeric">
           <span class="size-x">×</span>
-          <input type="number" class="size-input" id="gridH" value="29" min="1" max="116">
+          <input type="number" class="size-input" id="gridH" value="29" min="1" max="116" inputmode="numeric">
         </div>
       </div>
 
       <div id="importSettings">
         <div class="setting-row">
-          <span class="setting-label">🧊 最大颜色数</span>
+          <span class="setting-label">🧊 最大颜色数 <span style="font-size:10px;font-weight:600;color:var(--text-light)">（颜色越多越逼真）</span></span>
           <div style="display:flex;align-items:center">
             <input type="range" id="colorCount" min="2" max="291" value="16">
             <span class="setting-value" id="colorCountValue">16</span>
@@ -894,8 +894,9 @@
 
     <!-- 底部操作栏 -->
     <div class="card" style="padding:14px">
-      <div class="action-bar">
+      <div class="action-bar" style="margin-top:0">
         <button class="btn btn-secondary btn-small" id="viewBtn" style="flex:1">🔍 查看图纸</button>
+        <button class="btn btn-primary btn-small" id="resultSaveBtn" style="flex:1">💾 保存图纸</button>
       </div>
       <div class="action-bar" style="margin-top:8px">
         <button class="btn btn-outline btn-small" id="backBtn">🏠 返回首页</button>
@@ -1525,6 +1526,13 @@
 
   colorCountEl.addEventListener('input', () => { colorCountVal.textContent = colorCountEl.value; });
 
+  // Clamp grid size inputs on blur (prevent 0/negative/NaN)
+  [gridWInput, gridHInput].forEach(inp => {
+    inp.addEventListener('blur', () => {
+      inp.value = clamp(parseInt(inp.value) || 29, 1, 116);
+    });
+  });
+
   // ================================================================
   //  Upload (direct mode)
   // ================================================================
@@ -1564,6 +1572,8 @@
     const f = animeFileInput.files[0];
     if (!f) return;
     if (!f.type.startsWith('image/')) { alert('请选择图片文件哦~'); return; }
+    // Revoke previous blob URL to prevent memory leak
+    if (animeOriginalBlob) { try { URL.revokeObjectURL(animeOriginalBlob); } catch(e){} }
     animeOriginalBlob = URL.createObjectURL(f);
     // Show preview in the upload zone
     animeUploadZone.innerHTML = '';
@@ -2246,7 +2256,15 @@
     fsApply();
   }
   function fsApply() {
-    if (fsCanvas) fsCanvas.style.transform = 'translate(' + fsTx + 'px,' + fsTy + 'px) scale(' + fsScale + ')';
+    if (!fsCanvas) return;
+    // Clamp pan so canvas never goes fully off-screen
+    const cw = fsArea.clientWidth, ch = fsArea.clientHeight;
+    const iw = parseFloat(fsCanvas.style.width) * fsScale;
+    const ih = parseFloat(fsCanvas.style.height) * fsScale;
+    const margin = 60; // always keep at least 60px visible
+    fsTx = Math.max(-iw + margin, Math.min(cw - margin, fsTx));
+    fsTy = Math.max(-ih + margin, Math.min(ch - margin, fsTy));
+    fsCanvas.style.transform = 'translate(' + fsTx + 'px,' + fsTy + 'px) scale(' + fsScale + ')';
   }
 
   fsArea.addEventListener('pointerdown', fsPD, { passive: false });
@@ -2316,6 +2334,7 @@
     openEditor();
   });
   $('fsSaveBtn').addEventListener('click', () => doSave());
+  $('resultSaveBtn').addEventListener('click', () => doSave());
 
   // ================================================================
   //  Fullscreen Editor
