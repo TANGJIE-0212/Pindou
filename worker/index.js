@@ -94,6 +94,24 @@ export default {
         return json({ error: '未获取到图片结果' }, 502);
       }
 
+      // Download the image and convert to base64 data URL
+      // (avoids CORS / network issues on mobile clients)
+      let imageDataUrl;
+      try {
+        const imgResp = await fetch(imageUrl);
+        if (!imgResp.ok) throw new Error('img fetch ' + imgResp.status);
+        const imgBuf = await imgResp.arrayBuffer();
+        const bytes = new Uint8Array(imgBuf);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const base64 = btoa(binary);
+        const contentType = imgResp.headers.get('content-type') || 'image/png';
+        imageDataUrl = `data:${contentType};base64,${base64}`;
+      } catch (imgErr) {
+        // Fallback: return the original URL if proxy fails
+        imageDataUrl = imageUrl;
+      }
+
       // ---- 限流计数 +1 (TTL 24小时自动过期) ----
       await Promise.all([
         env.RATE_LIMIT.put(dailyKey, String(dailyCount + 1), { expirationTtl: 86400 }),
@@ -101,7 +119,7 @@ export default {
       ]);
 
       return json({
-        url: imageUrl,
+        url: imageDataUrl,
         remaining: {
           daily: 100 - dailyCount - 1,
           ip: 3 - ipCount - 1
