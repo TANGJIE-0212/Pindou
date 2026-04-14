@@ -2888,7 +2888,7 @@
   // ================================================================
   //  Save as image (render to canvas then download)
   // ================================================================
-  function doSave() {
+  async function doSave() {
     if (!grid) return;
     const cellSize = 24;
     const hdrSize = 16;
