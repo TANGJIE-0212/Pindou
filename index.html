@@ -2296,9 +2296,8 @@
   $('fsFitBtn').addEventListener('click', fsFit);
   $('fsEditBtn').addEventListener('click', () => {
     closeFsView();
-    // replace fullscreen state with editor state (no extra back entry)
-    history.replaceState({ layer: 'editor' }, '');
-    openEditor(true);
+    // Push editor on top of fullscreen state so back returns to fullscreen
+    openEditor();
   });
   $('fsSaveBtn').addEventListener('click', () => doSave());
 
