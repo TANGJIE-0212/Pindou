@@ -2904,8 +2904,8 @@
   // ================================================================
   async function doSave() {
     if (!grid) return;
-    const cellSize = 24;
-    const hdrSize = 16;
+    const cellSize = 48;
+    const hdrSize = 36;
     const gridW = hdrSize + cellSize * gW + hdrSize;
     const gridH = hdrSize + cellSize * gH + hdrSize;
 
@@ -2919,10 +2919,10 @@
     const usedColors = Object.keys(cnt).map(Number).sort((a, b) => a - b);
 
     // Legend layout
-    const legCols = Math.min(4, Math.max(2, Math.floor(gridW / 150)));
-    const legItemH = 20;
-    const legPadTop = 14;
-    const legPadBottom = 10;
+    const legCols = Math.min(5, Math.max(2, Math.floor(gridW / 240)));
+    const legItemH = 36;
+    const legPadTop = 24;
+    const legPadBottom = 16;
     const legRows = Math.ceil(usedColors.length / legCols);
     const legendH = legPadTop + legRows * legItemH + legPadBottom;
 
@@ -2935,14 +2935,14 @@
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, totalW, totalH);
 
-    ctx.font = '7px Courier New';
+    ctx.font = 'bold 14px Courier New';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     // Column headers
     for (let x = 0; x < gW; x++) {
       const cx = hdrSize + x * cellSize + cellSize / 2;
-      ctx.fillStyle = '#9B7E9E';
+      ctx.fillStyle = '#6B5B6E';
       ctx.fillText(String(x + 1), cx, hdrSize / 2);
       ctx.fillText(String(x + 1), cx, gridH - hdrSize / 2);
     }
@@ -2950,13 +2950,13 @@
     // Row headers
     for (let y = 0; y < gH; y++) {
       const cy = hdrSize + y * cellSize + cellSize / 2;
-      ctx.fillStyle = '#9B7E9E';
+      ctx.fillStyle = '#6B5B6E';
       ctx.fillText(String(y + 1), hdrSize / 2, cy);
       ctx.fillText(String(y + 1), gridW - hdrSize / 2, cy);
     }
 
     // Cells
-    ctx.font = 'bold 6px Courier New';
+    ctx.font = 'bold 12px Courier New';
     for (let y = 0; y < gH; y++) {
       for (let x = 0; x < gW; x++) {
         const ci = grid[y][x];
@@ -2967,22 +2967,24 @@
         ctx.fillRect(px, py, cellSize, cellSize);
 
         // Grid lines
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+        ctx.lineWidth = 1;
         ctx.strokeRect(px, py, cellSize, cellSize);
 
         // Label
         if (b) {
           const lum = luminance(b.h);
-          ctx.fillStyle = lum < 100 ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.6)';
+          ctx.fillStyle = lum < 100 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.65)';
+          ctx.font = 'bold 12px Courier New';
+          ctx.textAlign = 'center';
           ctx.fillText(shortRef(getDisplayName(b.n)), px + cellSize / 2, py + cellSize / 2);
         }
       }
     }
 
     // 5-grid thick lines
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 2.5;
     for (let i = 0; i <= Math.max(gW, gH); i += 5) {
       if (i <= gW) {
         const xp = hdrSize + i * cellSize;
@@ -2995,14 +2997,14 @@
     }
 
     // Outer border
-    ctx.strokeStyle = '#8B7B8E';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#6B5B6E';
+    ctx.lineWidth = 2.5;
     ctx.strokeRect(hdrSize, hdrSize, gW * cellSize, gH * cellSize);
 
     // --- Color Legend ---
     const legTop = gridH + legPadTop;
     const colW = Math.floor(totalW / legCols);
-    const swatchW = 24, swatchH = 14;
+    const swatchW = 40, swatchH = 24;
     ctx.textBaseline = 'middle';
     for (let i = 0; i < usedColors.length; i++) {
       const ci = usedColors[i];
@@ -3010,24 +3012,24 @@
       if (!bead) continue;
       const col = i % legCols;
       const row = Math.floor(i / legCols);
-      const lx = col * colW + 8;
+      const lx = col * colW + 12;
       const ly = legTop + row * legItemH;
       // Swatch
       ctx.fillStyle = bead.h;
-      ctx.fillRect(lx, ly + 1, swatchW, swatchH);
-      ctx.strokeStyle = '#ccc';
-      ctx.lineWidth = 0.5;
-      ctx.strokeRect(lx, ly + 1, swatchW, swatchH);
+      ctx.fillRect(lx, ly + 2, swatchW, swatchH);
+      ctx.strokeStyle = '#bbb';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(lx, ly + 2, swatchW, swatchH);
       // Code + count
       ctx.textAlign = 'left';
       ctx.fillStyle = '#333';
-      ctx.font = '600 10px Courier New';
+      ctx.font = '700 16px Courier New';
       const code = shortRef(getDisplayName(bead.n));
-      ctx.fillText(code, lx + swatchW + 4, ly + 1 + swatchH / 2);
-      ctx.fillStyle = '#999';
-      ctx.font = '400 10px Courier New';
+      ctx.fillText(code, lx + swatchW + 6, ly + 2 + swatchH / 2);
+      ctx.fillStyle = '#888';
+      ctx.font = '400 14px Courier New';
       const codeW = ctx.measureText(code).width;
-      ctx.fillText(' ×' + cnt[ci], lx + swatchW + 4 + codeW, ly + 1 + swatchH / 2);
+      ctx.fillText(' ×' + cnt[ci], lx + swatchW + 6 + codeW, ly + 2 + swatchH / 2);
     }
 
     const fileName = '拼豆图纸_' + gW + 'x' + gH + '.png';
