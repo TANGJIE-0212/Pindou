@@ -2199,7 +2199,7 @@
   //  Algorithm dispatcher (实际代码在 algo-shared/ours/competitor.js)
   //  切换算法：改 currentAlgo 即可  'competitor' | 'ours'
   // ================================================================
-  let currentAlgo = 'competitor';   // ← 默认用竞品方案，改成 'ours' 切回我们的
+  let currentAlgo = 'ours';   // ← 改成 'competitor' 切到竞品方案
 
   function quantize(imgData, w, h, numC) {
     if (currentAlgo === 'competitor') {
