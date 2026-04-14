@@ -14,6 +14,92 @@ function colDist(a, b) {
   return Math.sqrt((2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db);
 }
 
+// ---------- CIELAB + CIEDE2000 ----------
+function rgbToLab(rgb) {
+  let r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255;
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+  let x = (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) / 0.95047;
+  let y = (r * 0.2126729 + g * 0.7151522 + b * 0.0721750);
+  let z = (r * 0.0193339 + g * 0.1191920 + b * 0.9503041) / 1.08883;
+  const e = 0.008856, k = 903.3;
+  x = x > e ? Math.cbrt(x) : (k * x + 16) / 116;
+  y = y > e ? Math.cbrt(y) : (k * y + 16) / 116;
+  z = z > e ? Math.cbrt(z) : (k * z + 16) / 116;
+  return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+}
+
+function ciede2000(lab1, lab2) {
+  const L1 = lab1[0], a1 = lab1[1], b1 = lab1[2];
+  const L2 = lab2[0], a2 = lab2[1], b2 = lab2[2];
+  const C1 = Math.sqrt(a1 * a1 + b1 * b1);
+  const C2 = Math.sqrt(a2 * a2 + b2 * b2);
+  const Cb = (C1 + C2) / 2;
+  const Cb7 = Math.pow(Cb, 7);
+  const G = 0.5 * (1 - Math.sqrt(Cb7 / (Cb7 + 6103515625)));
+  const ap1 = a1 * (1 + G), ap2 = a2 * (1 + G);
+  const Cp1 = Math.sqrt(ap1 * ap1 + b1 * b1);
+  const Cp2 = Math.sqrt(ap2 * ap2 + b2 * b2);
+  let hp1 = Math.atan2(b1, ap1) * 180 / Math.PI; if (hp1 < 0) hp1 += 360;
+  let hp2 = Math.atan2(b2, ap2) * 180 / Math.PI; if (hp2 < 0) hp2 += 360;
+  const dL = L2 - L1;
+  const dCp = Cp2 - Cp1;
+  let dhp;
+  if (Cp1 * Cp2 === 0) dhp = 0;
+  else if (Math.abs(hp2 - hp1) <= 180) dhp = hp2 - hp1;
+  else if (hp2 - hp1 > 180) dhp = hp2 - hp1 - 360;
+  else dhp = hp2 - hp1 + 360;
+  const dHp = 2 * Math.sqrt(Cp1 * Cp2) * Math.sin(dhp * Math.PI / 360);
+  const Lb = (L1 + L2) / 2;
+  const Cpb = (Cp1 + Cp2) / 2;
+  let hpb;
+  if (Cp1 * Cp2 === 0) hpb = hp1 + hp2;
+  else if (Math.abs(hp1 - hp2) <= 180) hpb = (hp1 + hp2) / 2;
+  else if (hp1 + hp2 < 360) hpb = (hp1 + hp2 + 360) / 2;
+  else hpb = (hp1 + hp2 - 360) / 2;
+  const T = 1
+    - 0.17 * Math.cos((hpb - 30) * Math.PI / 180)
+    + 0.24 * Math.cos(2 * hpb * Math.PI / 180)
+    + 0.32 * Math.cos((3 * hpb + 6) * Math.PI / 180)
+    - 0.20 * Math.cos((4 * hpb - 63) * Math.PI / 180);
+  const Lb50 = (Lb - 50) * (Lb - 50);
+  const SL = 1 + 0.015 * Lb50 / Math.sqrt(20 + Lb50);
+  const SC = 1 + 0.045 * Cpb;
+  const SH = 1 + 0.015 * Cpb * T;
+  const Cpb7 = Math.pow(Cpb, 7);
+  const RC = 2 * Math.sqrt(Cpb7 / (Cpb7 + 6103515625));
+  const dhpb = ((hpb - 275) / 25);
+  const RT = -Math.sin(2 * 60 * Math.exp(-dhpb * dhpb) * Math.PI / 180) * RC;
+  const rL = dL / SL, rC = dCp / SC, rH = dHp / SH;
+  return Math.sqrt(rL * rL + rC * rC + rH * rH + RT * rC * rH);
+}
+
+// Pre-computed Lab palette cache
+var _palLabCache = null;
+var _palLabSrc = null;
+function getPalLab(allRgb) {
+  if (_palLabSrc === allRgb && _palLabCache) return _palLabCache;
+  _palLabCache = allRgb.map(rgbToLab);
+  _palLabSrc = allRgb;
+  return _palLabCache;
+}
+
+function closestIdxLab(rgb, allRgb) {
+  const lab = rgbToLab(rgb);
+  const palLab = getPalLab(allRgb);
+  let m = Infinity, best = 0;
+  for (let i = 0; i < palLab.length; i++) {
+    const d = ciede2000(lab, palLab[i]);
+    if (d < m) { m = d; best = i; }
+  }
+  return best;
+}
+
+function colDistLab(a, b) {
+  return ciede2000(rgbToLab(a), rgbToLab(b));
+}
+
 function closestIdx(rgb, pal) {
   let m = Infinity, best = 0;
   for (let i = 0; i < pal.length; i++) {

@@ -1,11 +1,11 @@
 /**
  * algo-competitor.js — 竞品方案：逐像素直接匹配最近调色板色
- * 参考 pindou.metamo.cn 的算法：
- *   1. 每像素独立计算与调色板的欧氏距离，选最近色
+ * 参考 pindouyishu.com 的算法：
+ *   1. RGB → CIELAB，用 CIEDE2000 色差公式匹配最近拼豆色
  *   2. 不做 k-means 聚类
  *   3. 如果用了太多颜色，迭代合并最少用的颜色到最近的邻色
  *
- * 依赖 algo-shared.js 中的：colDist, closestIdx, buildBackgroundMask
+ * 依赖 algo-shared.js 中的：colDistLab, closestIdxLab, buildBackgroundMask, rgbToLab, ciede2000, getPalLab
  *
  * 全局暴露：window.quantizeCompetitor(imgData, w, h, numC, allRgb, EMPTY)
  */
@@ -71,11 +71,12 @@
       }
       if (minColor === -1) break;
 
-      // 在调色板中找最近的已使用色
+      // 在调色板中找最近的已使用色 (CIEDE2000)
       let bestTarget = -1, bestDist = Infinity;
+      const minLab = rgbToLab(allRgb[minColor]);
       for (const [color] of usage) {
         if (color === minColor) continue;
-        const d = colDist(allRgb[minColor], allRgb[color]);
+        const d = ciede2000(minLab, rgbToLab(allRgb[color]));
         if (d < bestDist) { bestDist = d; bestTarget = color; }
       }
       if (bestTarget === -1) break;
@@ -122,7 +123,7 @@
     // 轻量平滑（竞品参数: 0.25）
     const smoothed = neighborSmooth(px, w, h, 0.25);
 
-    // 逐像素直接匹配最近调色板色
+    // 逐像素直接匹配最近调色板色 (CIEDE2000)
     const grid = [];
     for (let y = 0; y < h; y++) {
       const row = [];
@@ -131,7 +132,7 @@
         if (bgMask[idx]) {
           row.push(EMPTY);
         } else {
-          row.push(closestIdx(smoothed[idx], allRgb));
+          row.push(closestIdxLab(smoothed[idx], allRgb));
         }
       }
       grid.push(row);
