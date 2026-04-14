@@ -2923,8 +2923,8 @@
   // ================================================================
   async function doSave() {
     if (!grid) return;
-    const cellSize = 48;
-    const hdrSize = 36;
+    const cellSize = 64;
+    const hdrSize = 44;
     const gridW = hdrSize + cellSize * gW + hdrSize;
     const gridH = hdrSize + cellSize * gH + hdrSize;
 
@@ -2938,10 +2938,10 @@
     const usedColors = Object.keys(cnt).map(Number).sort((a, b) => a - b);
 
     // Legend layout
-    const legCols = Math.min(5, Math.max(2, Math.floor(gridW / 240)));
-    const legItemH = 36;
-    const legPadTop = 24;
-    const legPadBottom = 16;
+    const legCols = Math.min(5, Math.max(2, Math.floor(gridW / 280)));
+    const legItemH = 44;
+    const legPadTop = 28;
+    const legPadBottom = 20;
     const legRows = Math.ceil(usedColors.length / legCols);
     const legendH = legPadTop + legRows * legItemH + legPadBottom;
 
@@ -2954,28 +2954,34 @@
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, totalW, totalH);
 
-    ctx.font = 'bold 14px Courier New';
+    // Header background strips (light pink)
+    ctx.fillStyle = '#FFF0F5';
+    ctx.fillRect(0, 0, totalW, hdrSize);                          // top
+    ctx.fillRect(0, gridH - hdrSize, totalW, hdrSize);            // bottom
+    ctx.fillRect(0, 0, hdrSize, gridH);                           // left
+    ctx.fillRect(gridW - hdrSize, 0, hdrSize, gridH);             // right
+
+    ctx.font = 'bold 18px "Courier New", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Column headers
+    // Column headers — dark pink for visibility
     for (let x = 0; x < gW; x++) {
       const cx = hdrSize + x * cellSize + cellSize / 2;
-      ctx.fillStyle = '#6B5B6E';
+      ctx.fillStyle = '#C62860';
       ctx.fillText(String(x + 1), cx, hdrSize / 2);
       ctx.fillText(String(x + 1), cx, gridH - hdrSize / 2);
     }
 
-    // Row headers
+    // Row headers — dark blue for contrast with column headers
     for (let y = 0; y < gH; y++) {
       const cy = hdrSize + y * cellSize + cellSize / 2;
-      ctx.fillStyle = '#6B5B6E';
+      ctx.fillStyle = '#1565C0';
       ctx.fillText(String(y + 1), hdrSize / 2, cy);
       ctx.fillText(String(y + 1), gridW - hdrSize / 2, cy);
     }
 
     // Cells
-    ctx.font = 'bold 12px Courier New';
     for (let y = 0; y < gH; y++) {
       for (let x = 0; x < gW; x++) {
         const ci = grid[y][x];
@@ -2986,24 +2992,24 @@
         ctx.fillRect(px, py, cellSize, cellSize);
 
         // Grid lines
-        ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)';
         ctx.lineWidth = 1;
         ctx.strokeRect(px, py, cellSize, cellSize);
 
-        // Label
+        // Label — color code inside each cell
         if (b) {
           const lum = luminance(b.h);
-          ctx.fillStyle = lum < 100 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.65)';
-          ctx.font = 'bold 12px Courier New';
+          ctx.fillStyle = lum < 100 ? '#FFFFFF' : '#1A1A1A';
+          ctx.font = 'bold 15px "Courier New", monospace';
           ctx.textAlign = 'center';
           ctx.fillText(shortRef(getDisplayName(b.n)), px + cellSize / 2, py + cellSize / 2);
         }
       }
     }
 
-    // 5-grid thick lines
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 2.5;
+    // 5-grid thick lines (red for easy counting)
+    ctx.strokeStyle = 'rgba(200,0,50,0.35)';
+    ctx.lineWidth = 3;
     for (let i = 0; i <= Math.max(gW, gH); i += 5) {
       if (i <= gW) {
         const xp = hdrSize + i * cellSize;
@@ -3016,14 +3022,19 @@
     }
 
     // Outer border
-    ctx.strokeStyle = '#6B5B6E';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 3;
     ctx.strokeRect(hdrSize, hdrSize, gW * cellSize, gH * cellSize);
 
     // --- Color Legend ---
+    // Separator line
+    ctx.strokeStyle = '#E0D0E0';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(16, gridH + 10); ctx.lineTo(totalW - 16, gridH + 10); ctx.stroke();
+
     const legTop = gridH + legPadTop;
     const colW = Math.floor(totalW / legCols);
-    const swatchW = 40, swatchH = 24;
+    const swatchW = 48, swatchH = 30;
     ctx.textBaseline = 'middle';
     for (let i = 0; i < usedColors.length; i++) {
       const ci = usedColors[i];
@@ -3031,24 +3042,27 @@
       if (!bead) continue;
       const col = i % legCols;
       const row = Math.floor(i / legCols);
-      const lx = col * colW + 12;
+      const lx = col * colW + 14;
       const ly = legTop + row * legItemH;
-      // Swatch
+      // Swatch with rounded rect
       ctx.fillStyle = bead.h;
-      ctx.fillRect(lx, ly + 2, swatchW, swatchH);
-      ctx.strokeStyle = '#bbb';
+      ctx.beginPath();
+      ctx.roundRect(lx, ly + 2, swatchW, swatchH, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#aaa';
       ctx.lineWidth = 1;
-      ctx.strokeRect(lx, ly + 2, swatchW, swatchH);
-      // Code + count
+      ctx.stroke();
+      // Code — bold dark
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#333';
-      ctx.font = '700 16px Courier New';
+      ctx.fillStyle = '#1A1A1A';
+      ctx.font = 'bold 18px "Courier New", monospace';
       const code = shortRef(getDisplayName(bead.n));
-      ctx.fillText(code, lx + swatchW + 6, ly + 2 + swatchH / 2);
-      ctx.fillStyle = '#888';
-      ctx.font = '400 14px Courier New';
+      ctx.fillText(code, lx + swatchW + 8, ly + 2 + swatchH / 2);
+      // Count — accent color
+      ctx.fillStyle = '#C62860';
+      ctx.font = '600 16px "Courier New", monospace';
       const codeW = ctx.measureText(code).width;
-      ctx.fillText(' ×' + cnt[ci], lx + swatchW + 6 + codeW, ly + 2 + swatchH / 2);
+      ctx.fillText(' ×' + cnt[ci], lx + swatchW + 8 + codeW, ly + 2 + swatchH / 2);
     }
 
     const fileName = '拼豆图纸_' + gW + 'x' + gH + '.png';
