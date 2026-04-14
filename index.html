@@ -1368,9 +1368,10 @@
 
   // Compute w×h preserving uploaded image aspect ratio; longEdge = longer side
   function aspectDims(longEdge) {
-    if (!uploadedImage) return { w: longEdge, h: longEdge };
-    const iw = uploadedImage.naturalWidth;
-    const ih = uploadedImage.naturalHeight;
+    const img = activeImage();
+    if (!img) return { w: longEdge, h: longEdge };
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
     if (iw >= ih) {
       return { w: longEdge, h: Math.max(1, Math.round(longEdge * ih / iw)) };
     } else {
@@ -1425,11 +1426,13 @@
   const historyGrid      = $('historyGrid');
 
   let mode = 'direct';
-  let uploadedImage = null;
-  let directImage = null;        // direct mode's uploaded image (preserved across tab switches)
+  let directImage = null;        // direct mode's uploaded image
   let animeImage = null;         // anime mode's converted cartoon image
   let animeOriginalFile = null;  // base64 of original photo for anime mode
   let animeOriginalBlob = null;  // blob URL for preview
+
+  // STRICT mode separation: always derive active image from mode
+  function activeImage() { return mode === 'direct' ? directImage : animeImage; }
   let difficulty = 'medium';
   let activeBrand = 'mard';
   let displayBrand = 'mard';
@@ -1480,11 +1483,9 @@
       $('directMode').classList.toggle('hidden', mode !== 'direct');
       $('animeMode').classList.toggle('hidden', mode !== 'anime');
       if (mode === 'anime') {
-        uploadedImage = animeImage;   // restore anime mode's image
         generateBtn.innerHTML = '✨ 动漫化 + 生成图纸';
         generateBtn.disabled = !animeImage && !animeOriginalFile;
       } else {
-        uploadedImage = directImage;  // restore direct mode's image
         generateBtn.innerHTML = '✨ 生成拼豆图纸';
         generateBtn.disabled = !directImage;
       }
@@ -1539,7 +1540,6 @@
       const img = new Image();
       img.onload = () => {
         directImage = img;
-        uploadedImage = img;
         uploadZone.innerHTML = '';
         const preview = document.createElement('img');
         preview.src = URL.createObjectURL(f);
@@ -1582,7 +1582,6 @@
     // Reset anime result
     animeResult.classList.add('hidden');
     animeImage = null;
-    uploadedImage = null;
     generateBtn.disabled = true;
   }
 
@@ -1664,7 +1663,6 @@
       });
 
       animeImage = cartoonImg;
-      uploadedImage = cartoonImg;
       animeBeforeImg.src = animeOriginalBlob;
       animeAfterImg.src = imageUrl;
       animeResult.classList.remove('hidden');
@@ -1771,12 +1769,11 @@
       div.appendChild(del);
 
       div.addEventListener('click', () => {
-        // Load this cartoon image as the current uploadedImage
+        // Load this cartoon image for anime mode
         const cartoonImg = new Image();
         if (!item.cartoon.startsWith('data:')) cartoonImg.crossOrigin = 'anonymous';
         cartoonImg.onload = () => {
           animeImage = cartoonImg;
-          uploadedImage = cartoonImg;
           animeBeforeImg.src = item.original;
           animeAfterImg.src = item.cartoon;
           animeResult.classList.remove('hidden');
@@ -1813,21 +1810,20 @@
   generateBtn.addEventListener('click', () => {
     if (mode === 'direct') {
       if (!directImage) return;
-      uploadedImage = directImage;
       doGenerate();
     } else {
       // anime mode
       if (!animeImage) {
         doAnimeConvert();   // no cartoon yet → convert first
       } else {
-        uploadedImage = animeImage;
         doGenerate();       // cartoon ready → generate pattern
       }
     }
   });
 
   async function doGenerate() {
-    if (!uploadedImage) return;
+    const img = activeImage();
+    if (!img) return;
     generateBtn.disabled = true;
     showProgress(true);
     setProgress(0, '正在分析图片...');
@@ -1842,7 +1838,7 @@
     setProgress(20, '正在缩放图片...');
     await tick();
 
-    const pd = adjustedPixels(uploadedImage, gW, gH);
+    const pd = adjustedPixels(img, gW, gH);
 
     setProgress(50, '正在匹配拼豆色...');
     await tick();
@@ -1864,10 +1860,11 @@
   }
 
   function regenerate() {
-    if (!uploadedImage) return;
+    const img = activeImage();
+    if (!img) return;
     const params = fidelityToParams(fidelityValue);
     const dims = aspectDims(params.size); gW = dims.w; gH = dims.h;
-    const pd = adjustedPixels(uploadedImage, gW, gH);
+    const pd = adjustedPixels(img, gW, gH);
     grid = quantize(pd, gW, gH, params.colors);
     undoStack = [];
     buildPatternTable();
@@ -1936,11 +1933,12 @@
 
   // Regenerate with explicit size + colors (from sub-sliders)
   function regenerateManual(size, colors) {
-    if (!uploadedImage) return;
+    const img = activeImage();
+    if (!img) return;
     const md = aspectDims(clamp(size, 15, 116));
     gW = md.w; gH = md.h;
     const c = clamp(colors, 4, activePalette.length);
-    const pd = adjustedPixels(uploadedImage, gW, gH);
+    const pd = adjustedPixels(img, gW, gH);
     grid = quantize(pd, gW, gH, c);
     undoStack = [];
     buildPatternTable();
