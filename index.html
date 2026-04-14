@@ -494,6 +494,42 @@
     box-shadow: inset -1px -1px 0 rgba(0,0,0,0.06);
   }
   .ecl-code { font-size: 8px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  /* Cell info toast (select tool) */
+  .editor-cell-info {
+    display: none; padding: 6px 10px; margin-top: 4px;
+    background: #fff; border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+    font-size: 12px; font-weight: 700; color: var(--text);
+    align-items: center; gap: 8px;
+  }
+  .editor-cell-info.show { display: flex; }
+  .eci-swatch {
+    width: 24px; height: 24px; border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;
+  }
+  /* Merge panel */
+  .editor-merge-panel {
+    display: none; margin-top: 6px; padding: 8px;
+    background: #fff; border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .editor-merge-panel.show { display: block; }
+  .merge-title { font-size: 11px; font-weight: 700; color: var(--text-light); margin-bottom: 6px; }
+  .merge-color-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .merge-item {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 8px;
+    background: var(--bg); cursor: pointer;
+    border: 1.5px solid transparent;
+    font-size: 11px; font-weight: 700; color: var(--text);
+    transition: all 0.12s;
+  }
+  .merge-item:hover { border-color: #e55; }
+  .merge-item:active { transform: scale(0.92); }
+  .merge-swatch {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
 
   /* (API key UI removed — key is on server side) */
   .anime-before-after {
@@ -831,6 +867,7 @@
       <button class="etop-btn" id="edColorLibBtn">🎨<span>色库</span></button>
       <button class="etop-btn" id="edUndoBtn">↩️<span>撤销</span></button>
       <button class="etop-btn" id="edRedoBtn">↪️<span>重做</span></button>
+      <button class="etop-btn" id="edMergeBtn">🔀<span>合并</span></button>
     </div>
     <button class="editor-done" id="editorDone">完成</button>
   </div>
@@ -847,10 +884,23 @@
         <button class="etool-btn" data-tool="bigEraser">
           <span class="etool-icon">🧽</span><span class="etool-label">大橡皮</span>
         </button>
+        <button class="etool-btn" data-tool="bucket">
+          <span class="etool-icon">🪣</span><span class="etool-label">油漆桶</span>
+        </button>
+        <button class="etool-btn" data-tool="select">
+          <span class="etool-icon">👆</span><span class="etool-label">选择</span>
+        </button>
       </div>
       <div class="editor-recent-colors" id="edRecentColors"></div>
     </div>
-    <!-- 完整色库面板 (默认隐藏) -->
+    <!-- 选择工具信息 -->
+    <div class="editor-cell-info" id="edCellInfo"></div>
+    <!-- 颜色合并面板 -->
+    <div class="editor-merge-panel" id="edMergePanel">
+      <div class="merge-title">选择要删除的颜色，将自动替换为最近似色</div>
+      <div class="merge-color-list" id="edMergeList"></div>
+    </div>
+    <!-- 完整色库面板 -->
     <div class="editor-colorlib" id="edColorLib">
       <div class="editor-colorlib-grid" id="edColorLibGrid"></div>
     </div>
@@ -2183,6 +2233,8 @@
     editorOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
     edColorLib.classList.remove('show');
+    $('edMergePanel').classList.remove('show');
+    $('edCellInfo').classList.remove('show');
     // Init recent colors from grid usage
     if (recentColors.length === 0) {
       const cnt = {};
@@ -2245,6 +2297,7 @@
   // --- Color library ---
   $('edColorLibBtn').addEventListener('click', () => {
     edColorLib.classList.toggle('show');
+    $('edMergePanel').classList.remove('show');
   });
 
   function buildColorLibGrid() {
@@ -2450,8 +2503,11 @@
       _edLastMidX = midX;
       _edLastMidY = midY;
     } else if (_edPointers.size === 1 && edIsDrawing) {
-      const c = edCellAt(e.clientX, e.clientY);
-      if (c) edApplyTool(c.x, c.y);
+      // Only pencil and eraser support continuous drag painting
+      if (currentTool === 'pencil' || currentTool === 'eraser') {
+        const c = edCellAt(e.clientX, e.clientY);
+        if (c) edApplyTool(c.x, c.y);
+      }
     }
   }
 
@@ -2489,18 +2545,117 @@
       renderEditorCanvas();
       updateUndoRedoBtns();
     } else if (currentTool === 'bigEraser') {
-      let changed = false;
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx, ny = y + dy;
-          if (nx >= 0 && ny >= 0 && nx < gW && ny < gH && grid[ny][nx] !== EMPTY) {
-            if (!changed) { pushUndo(); redoStack = []; changed = true; }
-            grid[ny][nx] = EMPTY;
-          }
-        }
+      // Flood-fill erase: erase all connected cells of same color
+      const target = grid[y][x];
+      if (target === EMPTY) return;
+      pushUndo(); redoStack = [];
+      floodFill(x, y, target, EMPTY);
+      renderEditorCanvas();
+      updateUndoRedoBtns();
+    } else if (currentTool === 'bucket') {
+      // Flood-fill paint: fill connected same-color cells with selected color
+      const target = grid[y][x];
+      if (target === selColorIdx) return;
+      pushUndo(); redoStack = [];
+      floodFill(x, y, target, selColorIdx);
+      addToRecent(selColorIdx);
+      renderEditorCanvas();
+      updateUndoRedoBtns();
+    } else if (currentTool === 'select') {
+      // Show cell info
+      const ci = grid[y][x];
+      const infoEl = $('edCellInfo');
+      if (ci >= 0) {
+        const b = activePalette[ci];
+        const name = getDisplayName(b.n);
+        infoEl.innerHTML = '<div class="eci-swatch" style="background:' + b.h + '"></div>'
+          + '<span>' + shortRef(name) + ' · ' + name + ' · (' + (x+1) + ',' + (y+1) + ')</span>';
+        infoEl.classList.add('show');
+      } else {
+        infoEl.innerHTML = '<span>空白格 · (' + (x+1) + ',' + (y+1) + ')</span>';
+        infoEl.classList.add('show');
       }
-      if (changed) { renderEditorCanvas(); updateUndoRedoBtns(); }
     }
+  }
+
+  // Flood fill helper (BFS)
+  function floodFill(sx, sy, targetColor, replaceColor) {
+    if (targetColor === replaceColor) return;
+    const queue = [[sx, sy]];
+    const visited = new Set();
+    visited.add(sy * gW + sx);
+    while (queue.length > 0) {
+      const [cx, cy] = queue.shift();
+      grid[cy][cx] = replaceColor;
+      const neighbors = [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]];
+      for (const [nx, ny] of neighbors) {
+        if (nx < 0 || ny < 0 || nx >= gW || ny >= gH) continue;
+        const key = ny * gW + nx;
+        if (visited.has(key)) continue;
+        if (grid[ny][nx] !== targetColor) continue;
+        visited.add(key);
+        queue.push([nx, ny]);
+      }
+    }
+  }
+
+  // --- Color merge ---
+  const edMergePanel = $('edMergePanel');
+  const edMergeList  = $('edMergeList');
+
+  $('edMergeBtn').addEventListener('click', () => {
+    const showing = edMergePanel.classList.toggle('show');
+    edColorLib.classList.remove('show');
+    if (showing) buildMergeList();
+  });
+
+  function buildMergeList() {
+    // Count used colors
+    const cnt = {};
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++) {
+        const i = grid[y][x];
+        if (i >= 0) cnt[i] = (cnt[i] || 0) + 1;
+      }
+    const used = Object.keys(cnt).map(Number).sort((a, b) => cnt[a] - cnt[b]);
+    edMergeList.innerHTML = '';
+    used.forEach(ci => {
+      const b = activePalette[ci];
+      if (!b) return;
+      const el = document.createElement('div');
+      el.className = 'merge-item';
+      el.innerHTML = '<div class="merge-swatch" style="background:' + b.h + '"></div>'
+        + shortRef(getDisplayName(b.n)) + ' <span style="color:#999;font-weight:400">×' + cnt[ci] + '</span>';
+      el.addEventListener('click', () => mergeColor(ci, cnt, used));
+      edMergeList.appendChild(el);
+    });
+  }
+
+  function mergeColor(removeIdx, cnt, usedList) {
+    // Find nearest color among other used colors
+    const removeRgb = hexToRgb(activePalette[removeIdx].h);
+    let bestIdx = -1, bestDist = Infinity;
+    for (const ci of usedList) {
+      if (ci === removeIdx) continue;
+      const rgb = hexToRgb(activePalette[ci].h);
+      const d = (removeRgb[0]-rgb[0])**2 + (removeRgb[1]-rgb[1])**2 + (removeRgb[2]-rgb[2])**2;
+      if (d < bestDist) { bestDist = d; bestIdx = ci; }
+    }
+    if (bestIdx < 0) return; // only one color, can't merge
+    const replaceName = shortRef(getDisplayName(activePalette[bestIdx].n));
+    pushUndo(); redoStack = [];
+    // Replace all cells
+    for (let y = 0; y < gH; y++)
+      for (let x = 0; x < gW; x++)
+        if (grid[y][x] === removeIdx) grid[y][x] = bestIdx;
+    renderEditorCanvas();
+    updateUndoRedoBtns();
+    buildMergeList();
+    // Show brief feedback
+    const infoEl = $('edCellInfo');
+    infoEl.innerHTML = '<span>已合并 → ' + replaceName + '</span>';
+    infoEl.classList.add('show');
+    setTimeout(() => { if (currentTool !== 'select') infoEl.classList.remove('show'); }, 2000);
   }
 
   // --- Editor tool select ---
