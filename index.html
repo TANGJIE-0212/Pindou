@@ -665,45 +665,6 @@
     40% { transform: translateY(-12px) scale(1.2); opacity: 1; }
   }
 
-  /* ===== Image history gallery ===== */
-  .history-section {
-    margin-top: 12px;
-  }
-  .history-title {
-    font-size: 12px; font-weight: 700; color: var(--text-light);
-    margin-bottom: 8px; display: flex; align-items: center; gap: 4px;
-  }
-  .history-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .history-item {
-    position: relative; border-radius: 8px; overflow: hidden;
-    border: 2px solid transparent; cursor: pointer;
-    transition: all 0.2s; aspect-ratio: 1;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.04);
-  }
-  .history-item:active { transform: scale(0.95); }
-  .history-item.selected { border-color: var(--pink); box-shadow: 0 0 0 2px var(--pink-light); }
-  .history-item img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
-  }
-  .history-item .history-badge {
-    position: absolute; top: 3px; right: 3px;
-    font-size: 8px; font-weight: 700; color: white;
-    background: var(--pink); border-radius: 4px;
-    padding: 1px 4px; line-height: 1.2;
-  }
-  .history-item .history-delete {
-    position: absolute; top: 3px; left: 3px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(0,0,0,0.5); border: none;
-    color: white; font-size: 10px; cursor: pointer;
-    display: none; align-items: center; justify-content: center;
-    line-height: 1;
-  }
-  .history-item:hover .history-delete { display: flex; }
-
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -769,45 +730,22 @@
       </div>
 
       <div id="animeMode" class="hidden">
+        <div style="background:#FFF0F5; border-radius:12px; padding:16px; margin-bottom:16px; border:1px dashed #FFB6C1;">
+          <div style="font-size:14px; color:#9E1B4F; font-weight:700; margin-bottom:8px">💡 转真人照片小妙招</div>
+          <div style="font-size:12px; color:var(--text-color); line-height:1.6; margin-bottom:12px">真人照片由于颜色渐变多、细节杂，直接生成的图纸往往密密麻麻难以拼搭。<br>建议您先前往 <b>豆包 App</b>、<b>通义千问</b> 等 AI 工具，一键将照片转为动漫简笔画，再回到这里上传生成。可以复制下方咒语哦：</div>
+          
+          <div style="background:#fff; border-radius:8px; padding:12px; border:1px solid rgba(0,0,0,0.05); position:relative; box-shadow:0 2px 8px rgba(0,0,0,0.02)">
+            <div id="copyPromptText" style="font-size:12px; color:#555; line-height:1.5">你好！请帮我把这张真人照片转换为适合做拼豆（Perler beads）的简笔画动漫风格。要求：风格极简扁平化，不要有渐变色和阴影，颜色应尽可能单一且对比分明。提取出人物的最核心特征，去除多余细节。请把背景变成纯白色。谢谢！</div>
+            <button id="copyPromptBtn" style="position:absolute; top:8px; right:8px; background:#fff; border:1px solid #f0f0f0; border-radius:4px; padding:4px 8px; font-size:11px; font-weight:bold; cursor:pointer; color:#C62860; box-shadow:0 1px 3px rgba(0,0,0,0.05)">一键复制</button>
+          </div>
+        </div>
+
         <div class="upload-zone" id="animeUploadZone">
           <span class="upload-icon">🖼️</span>
-          <div class="upload-text">点击上传原始照片</div>
-          <div class="upload-hint">上传后通过 AI 转为动漫/卡通风格</div>
+          <div class="upload-text">在这里上传动漫化后的照片</div>
+          <div class="upload-hint">处理好的图片点击此处上传</div>
         </div>
         <input type="file" id="animeFileInput" accept="image/*">
-
-        <div style="margin-top:8px;text-align:center">
-          <span id="animeQuotaInfo" style="font-size:11px;color:var(--text-light);font-weight:600">🌟 每人每天 3 次免费动漫化机会</span>
-        </div>
-
-        <!-- 加载动画 -->
-        <div class="anime-loading" id="animeLoading">
-          <div class="anime-loading-beads">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-          <div class="anime-loading-step" id="animeLoadingStep">正在压缩图片...</div>
-          <div class="anime-loading-hint" id="animeLoadingHint">通常需要 5-10 秒</div>
-        </div>
-
-        <div id="animeResult" class="hidden">
-          <div class="anime-before-after">
-            <div class="ab-col">
-              <img id="animeBeforeImg">
-              <div class="ab-label">原图</div>
-            </div>
-            <div class="ab-arrow">→</div>
-            <div class="ab-col">
-              <img id="animeAfterImg">
-              <div class="ab-label">动漫化</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 历史图片 -->
-        <div class="history-section" id="historySection" style="display:none">
-          <div class="history-title">📂 今日动漫化记录（点击可直接生成图纸）</div>
-          <div class="history-grid" id="historyGrid"></div>
-        </div>
       </div>
 
     </div>
@@ -1449,9 +1387,7 @@
   const animeResult      = $('animeResult');
   const animeBeforeImg   = $('animeBeforeImg');
   const animeAfterImg    = $('animeAfterImg');
-  const historySection   = $('historySection');
-  const historyGrid      = $('historyGrid');
-
+    
   let mode = 'direct';
   let directImage = null;        // direct mode's uploaded image
   let animeImage = null;         // anime mode's converted cartoon image
@@ -1468,8 +1404,6 @@
   // ==========================================
   //  ⭐ 部署后将这里改成你的 Cloudflare Worker URL
   // ==========================================
-  const ANIME_PROXY_URL = 'https://pindou-api.tmolise212.workers.dev';
-
   let grid = null, gW = 29, gH = 29;
   let usedIndices = []; // global palette indices actually used
   let currentTool = 'pencil';
@@ -1510,8 +1444,8 @@
       $('directMode').classList.toggle('hidden', mode !== 'direct');
       $('animeMode').classList.toggle('hidden', mode !== 'anime');
       if (mode === 'anime') {
-        generateBtn.innerHTML = '✨ 动漫化 + 生成图纸';
-        generateBtn.disabled = !animeImage && !animeOriginalFile;
+        generateBtn.innerHTML = '✨ 生成图纸';
+        generateBtn.disabled = !animeImage;
       } else {
         generateBtn.innerHTML = '✨ 生成拼豆图纸';
         generateBtn.disabled = !directImage;
@@ -1562,6 +1496,16 @@
   // ================================================================
   //  Upload (direct mode)
   // ================================================================
+  
+  copyPromptBtn?.addEventListener('click', () => {
+    const text = copyPromptText.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      showGlobalToast('咒语已复制，快去豆包试试吧！');
+    }).catch(() => {
+      showGlobalToast('复制失败，请手动长按复制');
+    });
+  });
+
   uploadZone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', handleFile);
 
@@ -1598,236 +1542,30 @@
     const f = animeFileInput.files[0];
     if (!f) return;
     if (!f.type.startsWith('image/')) { alert('请选择图片文件哦~'); return; }
-    // Revoke previous blob URL to prevent memory leak
-    if (animeOriginalBlob) { try { URL.revokeObjectURL(animeOriginalBlob); } catch(e){} }
-    animeOriginalBlob = URL.createObjectURL(f);
+    
     // Show preview in the upload zone
     animeUploadZone.innerHTML = '';
     const preview = document.createElement('img');
-    preview.src = animeOriginalBlob;
-    preview.alt = '原图预览';
+    preview.alt = '动漫图预览';
     animeUploadZone.appendChild(preview);
     animeUploadZone.classList.add('has-image');
-    // Read as base64 for API
+    
     const reader = new FileReader();
     reader.onload = ev => {
-      animeOriginalFile = ev.target.result; // data:image/xxx;base64,...
-      checkAnimeReady();
-    };
-    reader.readAsDataURL(f);
-    // Reset anime result
-    animeResult.classList.add('hidden');
-    animeImage = null;
-    generateBtn.disabled = true;
-  }
-
-  function checkAnimeReady() {
-    if (mode === 'anime') generateBtn.disabled = !animeOriginalFile;
-  }
-
-  // Compress image to max 768px, JPEG 70%
-  function compressImage(dataUrl, maxSize) {
-    return new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        const ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(c.toDataURL('image/jpeg', 0.7));
+        animeImage = img;
+        generateBtn.disabled = false;
       };
-      img.src = dataUrl;
-    });
-  }
-
-  function setAnimeStep(step, hint) {
-    animeLoadingStep.textContent = step;
-    animeLoadingHint.textContent = hint || '';
-  }
-
-  async function doAnimeConvert() {
-    if (!animeOriginalFile) return;
-
-    generateBtn.disabled = true;
-    animeLoading.classList.add('show');
-    animeResult.classList.add('hidden');
-
-    try {
-      setAnimeStep('🗜️ 正在压缩图片...', '减小体积，加速上传');
-      await tick();
-
-      const compressed = await compressImage(animeOriginalFile, 768);
-
-      setAnimeStep('📡 正在上传并动漫化...', '');
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
-      const resp = await fetch(ANIME_PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: compressed }),
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      setAnimeStep('✨ 正在获取结果...', '马上就好');
-
-      const data = await resp.json();
-
-      if (!resp.ok) {
-        throw new Error(data.error || 'HTTP ' + resp.status);
-      }
-
-      const imageUrl = data.url;
-      if (!imageUrl) throw new Error('未获取到图片结果');
-
-      if (data.remaining) {
-        animeQuotaInfo.textContent = '🌟 今日剩余 ' + data.remaining.ip + ' 次免费机会';
-      }
-
-      setAnimeStep('🖼️ 正在加载动漫化图片...', '');
-
-      const cartoonImg = new Image();
-      if (!imageUrl.startsWith('data:')) cartoonImg.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        cartoonImg.onload = resolve;
-        cartoonImg.onerror = () => reject(new Error('图片加载失败，请重试'));
-        cartoonImg.src = imageUrl;
-      });
-
-      animeImage = cartoonImg;
-      animeBeforeImg.src = animeOriginalBlob;
-      animeAfterImg.src = imageUrl;
-      animeResult.classList.remove('hidden');
-      generateBtn.disabled = false;
-
-      // Save to history
-      saveToHistory(animeOriginalBlob, imageUrl);
-
-      // Auto generate bead pattern
-      setAnimeStep('🧱 正在生成拼豆图纸...', '');
-      await tick();
-      await doGenerate();
-
-    } catch (err) {
-      alert('动漫化失败: ' + err.message);
-    } finally {
-      animeLoading.classList.remove('show');
-      checkAnimeReady();
-    }
-  }
-
-  // ================================================================
-  //  Image History (localStorage, today only)
-  // ================================================================
-  const HISTORY_KEY = 'pindou_anime_history';
-
-  function getTodayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function loadHistory() {
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      if (!raw) return [];
-      const data = JSON.parse(raw);
-      if (data.date !== getTodayKey()) {
-        localStorage.removeItem(HISTORY_KEY);
-        return [];
-      }
-      return data.items || [];
-    } catch { return []; }
-  }
-
-  function saveHistory(items) {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify({
-      date: getTodayKey(),
-      items: items.slice(0, 20) // max 20
-    }));
-  }
-
-  function saveToHistory(originalBlobUrl, cartoonUrl) {
-    // Convert blob URL to data URL for persistence
-    const c = document.createElement('canvas');
-    const img = animeBeforeImg;
-    const scale = Math.min(1, 200 / Math.max(img.naturalWidth || 200, img.naturalHeight || 200));
-    c.width = Math.round((img.naturalWidth || 200) * scale);
-    c.height = Math.round((img.naturalHeight || 200) * scale);
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, c.width, c.height);
-    const thumbOriginal = c.toDataURL('image/jpeg', 0.6);
-
-    const items = loadHistory();
-    items.unshift({
-      original: thumbOriginal,
-      cartoon: cartoonUrl,
-      time: Date.now()
-    });
-    saveHistory(items);
-    renderHistory();
-  }
-
-  function renderHistory() {
-    const items = loadHistory();
-    if (items.length === 0) {
-      historySection.style.display = 'none';
-      return;
-    }
-    historySection.style.display = '';
-    historyGrid.innerHTML = '';
-    items.forEach((item, i) => {
-      const div = document.createElement('div');
-      div.className = 'history-item';
-      const img = document.createElement('img');
-      img.src = item.cartoon;
-      img.alt = '动漫化 ' + (i + 1);
-      img.loading = 'lazy';
-      div.appendChild(img);
-
-      const badge = document.createElement('span');
-      badge.className = 'history-badge';
-      badge.textContent = '动漫';
-      div.appendChild(badge);
-
-      const del = document.createElement('button');
-      del.className = 'history-delete';
-      del.textContent = '✕';
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        const items = loadHistory();
-        items.splice(i, 1);
-        saveHistory(items);
-        renderHistory();
-      });
-      div.appendChild(del);
-
-      div.addEventListener('click', () => {
-        // Load this cartoon image for anime mode
-        const cartoonImg = new Image();
-        if (!item.cartoon.startsWith('data:')) cartoonImg.crossOrigin = 'anonymous';
-        cartoonImg.onload = () => {
-          animeImage = cartoonImg;
-          animeBeforeImg.src = item.original;
-          animeAfterImg.src = item.cartoon;
-          animeResult.classList.remove('hidden');
-          generateBtn.disabled = false;
-          // Highlight selected
-          historyGrid.querySelectorAll('.history-item').forEach(h => h.classList.remove('selected'));
-          div.classList.add('selected');
-        };
-        cartoonImg.onerror = () => alert('图片加载失败，可能已过期');
-        cartoonImg.src = item.cartoon;
-      });
-
-      historyGrid.appendChild(div);
-    });
+      img.onerror = () => { alert('图片加载失败，请尝试其他图片~'); };
+      img.src = ev.target.result;
+      preview.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
   }
 
   // Load history on init
-  renderHistory();
+  
 
   paletteBrand.addEventListener('change', () => {
     displayBrand = paletteBrand.value;
@@ -1848,12 +1586,8 @@
       if (!directImage) return;
       doGenerate();
     } else {
-      // anime mode
-      if (!animeImage) {
-        doAnimeConvert();   // no cartoon yet → convert first
-      } else {
-        doGenerate();       // cartoon ready → generate pattern
-      }
+      if (!animeImage) return;
+      doGenerate();
     }
   });
 
