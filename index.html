@@ -69,6 +69,29 @@
     opacity: 0.5;
   }
 
+  .global-toast {
+    position: fixed;
+    top: max(40px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .global-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
   .container {
     max-width: 460px;
     margin: 0 auto;
@@ -688,6 +711,9 @@
 </style>
 </head>
 <body>
+
+<!-- Global Toast -->
+<div class="global-toast" id="globalToast">✔️ 已保存</div>
 
 <div class="container">
   <div class="header">
@@ -3107,6 +3133,7 @@
         const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file] });
+          showGlobalToast('分享成功！');
           return;
         }
       } catch (e) {
@@ -3119,9 +3146,20 @@
     a.download = fileName;
     a.href = cv.toDataURL('image/png');
     a.click();
+    showGlobalToast('图片已下载到本地！');
   }
 
-  // saveBtn removed – save is now inside fullscreen view
+  let _toastTimer = null;
+  function showGlobalToast(msg) {
+    const toast = document.getElementById('globalToast');
+    if (!toast) return;
+    toast.innerHTML = msg;
+    toast.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2000);
+  }
 
   // ================================================================
   //  Algorithm dispatcher (实际代码在 algo-shared/ours/competitor.js)
