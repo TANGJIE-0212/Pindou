@@ -741,11 +741,16 @@
               <div style="width:20px; height:20px; background:#FFB6C1; color:#FFF; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; flex-shrink:0;">1</div>
               <div style="flex:1;">
                 <div style="font-size:13px; font-weight:bold; color:#C62860; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                  去借用 AI 工具转化 <button id="copyPromptBtn" style="background:#fff; border:1px solid #FFB6C1; border-radius:12px; padding:2px 8px; font-size:11px; font-weight:bold; cursor:pointer; color:#C62860; display:flex; align-items:center; gap:4px">📝 复制咒语</button>
+                  用豆包/元宝/千问动漫化图片
                 </div>
                 <div style="font-size:11px; color:var(--text-light); line-height:1.4;">
-                  推荐去豆包等 App，由于真人拼起豆子来太密集，发送下方咒语转成二次元后效果更好：
-                  <div id="copyPromptText" style="background:#fff; padding:6px; border-radius:6px; margin-top:6px; font-size:11px; color:#666; border:1px solid rgba(0,0,0,0.03);">请把这张照片转为极简扁平化简笔画动漫风格。不要渐变色、不要阴影、色块纯碎单一、去掉背景。</div>
+                  直接抓取真人图片细小的渐变和杂色会导致拼豆极其杂乱繁琐、难以成型。你可以保存下方咒语，先让大模型把照片转成色彩纯粹的二次元简笔画：
+                  <div style="background:#fff; padding:10px; border-radius:8px; margin-top:8px; border:1px solid rgba(0,0,0,0.05); box-shadow:0 2px 4px rgba(0,0,0,0.03);">
+                    <div id="copyPromptText" style="font-size:11px; color:#555;">你好，请把这张图片转换为适合做拼豆的简笔画动漫风格。要求：风格极简并扁平化，不要出现任何渐变色和阴影，颜色块要尽量大面积且纯粹。提取人物核心特征，去除多余细节及背景。</div>
+                    <div style="text-align:right; margin-top:8px;">
+                      <button id="copyPromptBtn" style="background:#FFF0F5; border:1px solid #FFB6C1; border-radius:12px; padding:4px 10px; font-size:11px; font-weight:bold; cursor:pointer; color:#C62860; display:inline-flex; align-items:center; gap:4px">📝 复制咒语</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -753,7 +758,7 @@
             <!-- Step 2 -->
             <div style="display:flex; align-items:center; gap:8px;">
               <div style="width:20px; height:20px; background:#FFB6C1; color:#FFF; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; flex-shrink:0;">2</div>
-              <div style="font-size:13px; font-weight:bold; color:#C62860;">保存后在这长按上传</div>
+              <div style="font-size:13px; font-weight:bold; color:#C62860;">保存后在这里上传</div>
             </div>
           </div>
         </div>
