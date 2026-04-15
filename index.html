@@ -2295,7 +2295,7 @@
       ctx.textAlign = 'left'; ctx.fillStyle = '#333'; ctx.font = '600 10px Courier New';
       const code = shortRef(getDisplayName(bead.n));
       ctx.fillText(code, lx + sw + 4, ly + 1 + sh / 2);
-      ctx.fillStyle = '#999'; ctx.font = '400 10px Courier New';
+      ctx.fillStyle = '#555'; ctx.font = '600 12px Courier New';
       ctx.fillText(' ×' + cnt[ci], lx + sw + 4 + ctx.measureText(code).width, ly + 1 + sh / 2);
     }
   }
@@ -3118,8 +3118,8 @@
       const code = shortRef(getDisplayName(bead.n));
       ctx.fillText(code, lx + swatchW + 8, ly + 2 + swatchH / 2);
       // Count — accent color
-      ctx.fillStyle = '#C62860';
-      ctx.font = '600 16px "Courier New", monospace';
+      ctx.fillStyle = '#9E1B4F'; // Darkened pink for better legibility
+      ctx.font = 'bold 18px "Courier New", monospace';
       const codeW = ctx.measureText(code).width;
       ctx.fillText(' ×' + cnt[ci], lx + swatchW + 8 + codeW, ly + 2 + swatchH / 2);
     }
