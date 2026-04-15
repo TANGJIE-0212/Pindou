@@ -3133,7 +3133,7 @@
         const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file] });
-          showGlobalToast('分享成功！');
+          showGlobalToast('保存成功');
           return;
         }
       } catch (e) {
@@ -3146,7 +3146,7 @@
     a.download = fileName;
     a.href = cv.toDataURL('image/png');
     a.click();
-    showGlobalToast('图片已下载到本地！');
+    showGlobalToast('保存成功');
   }
 
   let _toastTimer = null;
