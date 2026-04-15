@@ -141,7 +141,7 @@
   }
   .setting-value {
     font-size: 13px; color: var(--text-light); font-weight: 600;
-    min-width: 36px; text-align: right;
+    min-width: 36px; text-align: right; flex-shrink: 0;
   }
 
   input[type="range"] {
@@ -832,7 +832,7 @@
       <div id="importSettings">
         <div class="setting-row">
           <span class="setting-label">🧊 最大颜色数 <span style="font-size:10px;font-weight:600;color:var(--text-light)">（颜色越多越逼真）</span></span>
-          <div style="display:flex;align-items:center">
+          <div style="display:flex;align-items:center;flex-shrink:0">
             <input type="range" id="colorCount" min="2" max="291" value="16">
             <span class="setting-value" id="colorCountValue">16</span>
           </div>
@@ -1863,6 +1863,13 @@
     updateStats();
     enterResult(true);
 
+    // Override display with actual generation params (avoid lossy fidelity round-trip)
+    fidelityInfo.textContent = gW + '×' + gH + ' · ' + colors + '色';
+    fidSizeSlider.value = Math.max(gW, gH);
+    fidSizeVal.textContent = gW + '×' + gH;
+    fidColorSlider.value = colors;
+    fidColorVal.textContent = colors + '色';
+
     setProgress(100, '完成！🎉');
     await delay(300);
     showProgress(false);
@@ -2089,7 +2096,7 @@
       ctx.fillText(String(y + 1), layout.width - layout.header / 2, cy);
     }
 
-    const textSize = Math.max(4, Math.floor(layout.cell * 0.28));
+    const textSize = Math.max(5, Math.floor(layout.cell * 0.38));
     ctx.font = '700 ' + textSize + 'px Courier New';
     for (let y = 0; y < gH; y++) {
       for (let x = 0; x < gW; x++) {
@@ -2159,6 +2166,7 @@
   }
 
   function drawFsCanvas(canvas, cell, hdr) {
+    cell = 48; hdr = 28;
     const gw = hdr * 2 + cell * gW;
     const gh = hdr * 2 + cell * gH;
     // Legend
@@ -2201,7 +2209,7 @@
       ctx.fillText(String(y + 1), gw - hdr / 2, cy);
     }
     // Cells
-    const ts = Math.max(5, Math.floor(cell * 0.32));
+    const ts = Math.max(8, Math.floor(cell * 0.38));
     ctx.font = '700 ' + ts + 'px Courier New';
     for (let y = 0; y < gH; y++) {
       for (let x = 0; x < gW; x++) {
@@ -3000,7 +3008,7 @@
         if (b) {
           const lum = luminance(b.h);
           ctx.fillStyle = lum < 100 ? '#FFFFFF' : '#1A1A1A';
-          ctx.font = 'bold 15px "Courier New", monospace';
+          ctx.font = 'bold 22px "Courier New", monospace';
           ctx.textAlign = 'center';
           ctx.fillText(shortRef(getDisplayName(b.n)), px + cellSize / 2, py + cellSize / 2);
         }
