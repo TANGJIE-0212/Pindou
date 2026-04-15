@@ -2069,7 +2069,11 @@
   }
 
   function drawPatternToCanvas(canvas, layout, forFullscreen) {
-    const dpr = window.devicePixelRatio || 1;
+    let dpr = window.devicePixelRatio || 1;
+    if (layout.width * layout.height * dpr * dpr > 12000000) {
+      dpr = Math.max(0.2, Math.sqrt(12000000 / (layout.width * layout.height)));
+    }
+    
     canvas.width = Math.round(layout.width * dpr);
     canvas.height = Math.round(layout.height * dpr);
     canvas.style.width = layout.width + 'px';
@@ -2162,7 +2166,17 @@
     fsOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
     history.pushState({ layer: 'fullscreen' }, '');
-    requestAnimationFrame(fsFit);
+    
+    // Force reflow right after showing the overlay to ensure clientWidth is available
+    fsArea.offsetHeight;
+    
+    requestAnimationFrame(() => {
+      if (fsArea.clientWidth === 0) {
+        setTimeout(fsFit, 50); // Fallback for slower browsers
+      } else {
+        fsFit();
+      }
+    });
   }
 
   function drawFsCanvas(canvas, cell, hdr) {
@@ -2184,7 +2198,13 @@
     const legendH = legPadT + legRows * legItemH + legPadB;
     const totalW = gw, totalH = gh + legendH;
 
-    const dpr = window.devicePixelRatio || 1;
+    let dpr = window.devicePixelRatio || 1;
+    // iOS Safari has a strict memory limit on canvas size (max ~16.7M pixels).
+    // Dynamically scaling down DPR avoids the canvas turning fully blank (invisible).
+    if (totalW * totalH * dpr * dpr > 12000000) {
+      dpr = Math.max(0.2, Math.sqrt(12000000 / (totalW * totalH)));
+    }
+
     canvas.width = Math.round(totalW * dpr);
     canvas.height = Math.round(totalH * dpr);
     canvas.style.width = totalW + 'px';
@@ -2257,6 +2277,7 @@
   function fsFit() {
     if (!fsCanvas) return;
     const cw = fsArea.clientWidth, ch = fsArea.clientHeight;
+    if (cw === 0 || ch === 0) return; // Prevent collapse if container has no dimensions yet
     const iw = parseFloat(fsCanvas.style.width), ih = parseFloat(fsCanvas.style.height);
     fsScale = Math.min(cw / iw, ch / ih, 1) * 0.95;
     fsMinScale = fsScale * 0.5;
@@ -2269,7 +2290,7 @@
     const cw = fsArea.clientWidth, ch = fsArea.clientHeight;
     const iw = parseFloat(fsCanvas.style.width) * fsScale;
     const ih = parseFloat(fsCanvas.style.height) * fsScale;
-    const margin = 60; // always keep at least 60px visible
+    const margin = Math.min(60, cw / 2, ch / 2); // Responsive margin
     fsTx = Math.max(-iw + margin, Math.min(cw - margin, fsTx));
     fsTy = Math.max(-ih + margin, Math.min(ch - margin, fsTy));
     fsCanvas.style.transform = 'translate(' + fsTx + 'px,' + fsTy + 'px) scale(' + fsScale + ')';
@@ -2524,7 +2545,11 @@
   function renderEditorCanvas() {
     const w = edHeader * 2 + edCell * gW;
     const h = edHeader * 2 + edCell * gH;
-    const dpr = window.devicePixelRatio || 1;
+    let dpr = window.devicePixelRatio || 1;
+    if (w * h * dpr * dpr > 12000000) {
+      dpr = Math.max(0.2, Math.sqrt(12000000 / (w * h)));
+    }
+    
     editorCanvas.width = Math.round(w * dpr);
     editorCanvas.height = Math.round(h * dpr);
     editorCanvas.style.width = w + 'px';
