@@ -984,6 +984,17 @@
   'use strict';
 
   // ================================================================
+  //  Telemetry helper — sends events to Google Analytics (gtag.js)
+  // ================================================================
+  function track(event, params) {
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', event, params || {});
+      }
+    } catch (e) { /* never break the app for analytics */ }
+  }
+
+  // ================================================================
   //  拼豆色板 — 291色 (Mard/Coco/漫漫/盼盼/咪小窝)
   //  数据来源: pindou.online / GitHub Mard221 / 品牌色号对照表
   // ================================================================
@@ -1474,6 +1485,7 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       mode = btn.dataset.mode;
+      track('mode_switch', { mode: mode });
       $('directMode').classList.toggle('hidden', mode !== 'direct');
       $('animeMode').classList.toggle('hidden', mode !== 'anime');
       if (mode === 'anime') {
@@ -1492,6 +1504,7 @@
     diffTiers.querySelectorAll('.diff-btn').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     difficulty = b.dataset.diff;
+    track('difficulty_change', { difficulty: difficulty });
     applyDifficultyDefaults();
   });
 
@@ -1532,6 +1545,7 @@
   
   copyPromptBtn?.addEventListener('click', () => {
     const text = copyPromptText.innerText;
+    track('copy_prompt');
     navigator.clipboard.writeText(text).then(() => {
       showGlobalToast('咒语已复制，快去豆包试试吧！');
     }).catch(() => {
@@ -1558,6 +1572,7 @@
         uploadZone.appendChild(preview);
         uploadZone.classList.add('has-image');
         generateBtn.disabled = false;
+        track('upload_image', { upload_mode: 'direct' });
       };
       img.onerror = () => { alert('图片加载失败，请尝试其他图片~'); };
       img.src = ev.target.result;
@@ -1589,6 +1604,7 @@
       img.onload = () => {
         animeImage = img;
         generateBtn.disabled = false;
+        track('upload_image', { upload_mode: 'anime' });
       };
       img.onerror = () => { alert('图片加载失败，请尝试其他图片~'); };
       img.src = ev.target.result;
@@ -1602,6 +1618,7 @@
 
   paletteBrand.addEventListener('change', () => {
     displayBrand = paletteBrand.value;
+    track('brand_change', { brand: displayBrand });
     // re-render if result is showing
     if (grid) {
       buildPatternTable();
@@ -1664,6 +1681,13 @@
     fidColorVal.textContent = colors + '色';
 
     setProgress(100, '完成！🎉');
+    track('generate_pattern', {
+      gen_mode: mode,
+      grid_size: gW + 'x' + gH,
+      colors: colors,
+      difficulty: difficulty,
+      brand: activeBrand
+    });
     await delay(300);
     showProgress(false);
     generateBtn.disabled = false;
@@ -1952,6 +1976,7 @@
   patternScroll.addEventListener('click', openFsView);
 
   function openFsView() {
+    track('open_fullscreen');
     fsArea.innerHTML = '';
     fsCanvas = document.createElement('canvas');
     drawFsCanvas(fsCanvas, 24, 20);
@@ -2186,6 +2211,7 @@
 
   function openEditor(skipPush) {
     if (!grid) return;
+    track('open_editor');
     currentTool = 'move'; // Default to move to prevent accidental drawing
     editorOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
@@ -2749,6 +2775,10 @@
   // ================================================================
   async function doSave() {
     if (!grid) return;
+    track('save_image', {
+      grid_size: gW + 'x' + gH,
+      brand: activeBrand
+    });
     const cellSize = 64;
     const hdrSize = 44;
     const gridW = hdrSize + cellSize * gW + hdrSize;
