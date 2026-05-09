@@ -958,6 +958,7 @@
     <button class="emm-btn" data-tool="bigEraser"><span class="emm-icon">🧽</span>大橡皮（连续删除）</button>
     <button class="emm-btn" data-tool="select"><span class="emm-icon">👆</span>选取（查看色号）</button>
     <button class="emm-btn" data-action="merge"><span class="emm-icon">🔀</span>颜色合并</button>
+    <button class="emm-btn" data-action="denoise"><span class="emm-icon">🪄</span>一键去噪（合并散点）</button>
   </div>
 
   <!-- Color library bottom sheet -->
@@ -2703,7 +2704,84 @@
     setTimeout(() => { if (currentTool !== 'select') infoEl.classList.remove('show'); }, 2000);
   }
 
-  // --- Editor tool select ---
+  // --- One-click denoise: merge tiny clusters (≤ threshold) into the dominant neighboring color
+  function denoise() {
+    if (!grid) return;
+    const THRESH = 2; // clusters with size ≤ THRESH are treated as noise
+    const visited = Array.from({ length: gH }, () => new Array(gW).fill(false));
+    const cells = []; // [{cells:[[x,y]...], color}]
+    const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+
+    // Find 4-connected same-color components
+    for (let y = 0; y < gH; y++) {
+      for (let x = 0; x < gW; x++) {
+        if (visited[y][x]) continue;
+        const c = grid[y][x];
+        if (c < 0) { visited[y][x] = true; continue; }
+        const queue = [[x, y]];
+        visited[y][x] = true;
+        const compCells = [];
+        while (queue.length) {
+          const [cx, cy] = queue.pop();
+          compCells.push([cx, cy]);
+          for (let d = 0; d < 4; d++) {
+            const nx = cx + DX[d], ny = cy + DY[d];
+            if (nx < 0 || ny < 0 || nx >= gW || ny >= gH) continue;
+            if (visited[ny][nx]) continue;
+            if (grid[ny][nx] !== c) continue;
+            visited[ny][nx] = true;
+            queue.push([nx, ny]);
+          }
+        }
+        cells.push({ cells: compCells, color: c });
+      }
+    }
+
+    // Plan replacements for small components
+    const newGrid = grid.map(r => [...r]);
+    let changed = 0;
+    for (const comp of cells) {
+      if (comp.cells.length > THRESH) continue;
+      // Find dominant neighboring color (8-conn) excluding self color
+      const nb = {};
+      for (const [cx, cy] of comp.cells) {
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = cx + dx, ny = cy + dy;
+            if (nx < 0 || ny < 0 || nx >= gW || ny >= gH) continue;
+            const nc = grid[ny][nx];
+            if (nc < 0 || nc === comp.color) continue;
+            nb[nc] = (nb[nc] || 0) + 1;
+          }
+        }
+      }
+      const entries = Object.entries(nb);
+      if (!entries.length) continue;
+      entries.sort((a, b) => b[1] - a[1]);
+      const target = parseInt(entries[0][0]);
+      for (const [cx, cy] of comp.cells) newGrid[cy][cx] = target;
+      changed += comp.cells.length;
+    }
+
+    if (!changed) {
+      const infoEl0 = $('edCellInfo');
+      infoEl0.innerHTML = '<span>没有发现散点 ✨</span>';
+      infoEl0.classList.add('show');
+      setTimeout(() => { if (currentTool !== 'select') infoEl0.classList.remove('show'); }, 1800);
+      return;
+    }
+
+    pushUndo(); redoStack = [];
+    grid = newGrid;
+    renderEditorCanvas();
+    updateUndoRedoBtns();
+    const infoEl = $('edCellInfo');
+    infoEl.innerHTML = '<span>已平滑 ' + changed + ' 颗散点</span>';
+    infoEl.classList.add('show');
+    setTimeout(() => { if (currentTool !== 'select') infoEl.classList.remove('show'); }, 2000);
+    track('denoise', { changed: changed });
+  }
   editorTools.addEventListener('click', e => {
     const btn = e.target.closest('.ets-btn');
     if (!btn) return;
@@ -2729,6 +2807,10 @@
     edMoreMenu.classList.remove('show');
     if (action === 'merge') {
       openMergePanel();
+      return;
+    }
+    if (action === 'denoise') {
+      denoise();
       return;
     }
     if (tool) {
