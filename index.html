@@ -2998,9 +2998,18 @@
       closeEditor();
       // If we came from fullscreen → editor, re-open fullscreen
       if (layer === 'fullscreen') {
+        // Re-render fs canvas so edits made in editor are reflected
+        fsArea.innerHTML = '';
+        fsCanvas = document.createElement('canvas');
+        drawFsCanvas(fsCanvas, 24, 20);
+        fsArea.appendChild(fsCanvas);
         fsOverlay.classList.add('show');
         document.body.style.overflow = 'hidden';
-        requestAnimationFrame(fsFit);
+        fsArea.offsetHeight;
+        requestAnimationFrame(() => {
+          if (fsArea.clientWidth === 0) setTimeout(fsFit, 50);
+          else fsFit();
+        });
       }
       return;
     }
